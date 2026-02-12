@@ -14,7 +14,7 @@ askOdin delivers AI-powered forensic analysis that transforms how venture capita
 |---|---|
 | **Website** | [askodin.app](https://askodin.app) |
 | **Product** | [crucible.askodin.app](https://crucible.askodin.app) |
-| **Contact** | [hi@askodin.com](mailto:hi@askodin.com) |
+| **Contact** | [hi@askodin.app](mailto:hi@askodin.app) |
 
 ---
 
@@ -206,7 +206,7 @@ These assets are provided for authorized use in connection with [askOdin](https:
 - Recreate or redraw the logo from scratch
 - Use the logo to imply endorsement without permission
 
-For press inquiries, partnership branding, or custom asset requests, contact [hi@askodin.com](mailto:hi@askodin.com).
+For press inquiries, partnership branding, or custom asset requests, contact [hi@askodin.app](mailto:hi@askodin.app).
 
 ---
 
