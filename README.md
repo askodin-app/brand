@@ -119,6 +119,16 @@ Branded banner for LinkedIn profiles (1584 x 396px). Features the askOdin wordma
 | Retina (3168x792) | [`askOdin-linkedin-banner-2x.png`](output/social/askOdin-linkedin-banner-2x.png) |
 | SVG source | [`askOdin-linkedin-banner.svg`](output/social/askOdin-linkedin-banner.svg) |
 
+### Twitter/X Cover
+
+Branded cover image for Twitter/X profiles (1500 x 500px). Same "hardened dark" aesthetic as the LinkedIn banner — logo, tagline, patent number, and CTA positioned to avoid the profile photo overlap zone (bottom-left).
+
+| Asset | File |
+|---|---|
+| Standard (1500x500) | [`askOdin-twitter-cover.png`](output/social/askOdin-twitter-cover.png) |
+| Retina (3000x1000) | [`askOdin-twitter-cover-2x.png`](output/social/askOdin-twitter-cover-2x.png) |
+| SVG source | [`askOdin-twitter-cover.svg`](output/social/askOdin-twitter-cover.svg) |
+
 ### Virtual Meeting Backgrounds
 
 Mirror-safe backgrounds for Zoom, Google Meet, and Microsoft Teams — no text or logo (works regardless of flip/mirror settings).
