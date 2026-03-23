@@ -4,7 +4,7 @@ Official brand assets for [askOdin](https://askodin.app) — **Judgment Infrastr
 
 askOdin delivers AI-powered forensic analysis that transforms how venture capital firms, accelerators, and institutional investors evaluate opportunities. Unlike tools that summarize or retrieve information, askOdin applies structured judgment — scoring, benchmarking, and stress-testing startup decks against real market data.
 
-**U.S. Patent App. 63/948,559**
+**U.S. Patents Pending: 63/948,559 · 63/994,876 · 64/011,252**
 
 ---
 
@@ -111,7 +111,7 @@ All available in [`output/png/app-icons/`](output/png/app-icons/).
 
 ### LinkedIn Cover Banner
 
-Branded banner for LinkedIn profiles (1584 x 396px). Features the askOdin wordmark, tagline, patent number, and CTA.
+Branded banner for LinkedIn profiles (1584 x 396px). Features the askOdin wordmark, tagline, patent numbers (RUNE, RAVEN, NORN), and CTA.
 
 | Asset | File |
 |---|---|
@@ -121,7 +121,7 @@ Branded banner for LinkedIn profiles (1584 x 396px). Features the askOdin wordma
 
 ### Twitter/X Cover
 
-Branded cover image for Twitter/X profiles (1500 x 500px). Same "hardened dark" aesthetic as the LinkedIn banner — logo, tagline, patent number, and CTA positioned to avoid the profile photo overlap zone (bottom-left).
+Branded cover image for Twitter/X profiles (1500 x 500px). Same "hardened dark" aesthetic as the LinkedIn banner — logo, tagline, patent numbers, and CTA positioned to avoid the profile photo overlap zone (bottom-left).
 
 | Asset | File |
 |---|---|
@@ -226,7 +226,7 @@ For press inquiries, partnership branding, or custom asset requests, contact [hi
 
 The last mile of AI isn't information. It's judgment.
 
-**U.S. Patent Application 63/948,559**
+**U.S. Patents Pending: 63/948,559 (RUNE) · 63/994,876 (RAVEN) · 64/011,252 (NORN)**
 
 ---
 
