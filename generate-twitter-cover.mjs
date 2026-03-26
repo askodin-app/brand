@@ -97,7 +97,7 @@ function generateCover() {
   elements.push(`<path d="${odinPath}" fill="${GREEN}"/>`);
 
   // Tagline
-  const tagSize = 22;
+  const tagSize = 30;
   const tagText = 'The Last Mile of AI Isn\'t Information. It\'s Judgment.';
   const tagW = getWidth(FONT_LIGHT, tagText, tagSize);
   const tagX = contentRight - tagW;
@@ -112,17 +112,17 @@ function generateCover() {
   elements.push(`<line x1="${contentRight - sepW}" y1="${sepY}" x2="${contentRight}" y2="${sepY}" stroke="${ORANGE}" stroke-width="2.5"/>`);
 
   // Sub-info line: Patent number
-  const infoSize = 16;
+  const infoSize = 20;
   const infoY = sepY + 35;
 
-  const infoText = 'U.S. Patent App. 63/948,559';
+  const infoText = 'U.S. Patents Pending: 63/948,559 \u00B7 63/994,876 \u00B7 64/011,252 \u00B7 64/017,488';
   const infoW = getWidth(FONT_MONO, infoText, infoSize);
   const infoX = contentRight - infoW;
   const infoPath = getPath(FONT_MONO, infoText, infoX, infoY, infoSize);
   elements.push(`<path d="${infoPath}" fill="${WHITE}" opacity="0.7"/>`);
 
   // CTA at bottom right
-  const ctaSize = 18;
+  const ctaSize = 22;
   const ctaText = 'askodin.app';
   const ctaW = getWidth(FONT_MEDIUM, ctaText, ctaSize);
   const ctaX = contentRight - ctaW;
@@ -137,18 +137,6 @@ function generateCover() {
   const ctaPath = getPath(FONT_MEDIUM, ctaText, ctaX, ctaY, ctaSize);
   elements.push(`<path d="${ctaPath}" fill="${WHITE}"/>`);
 
-  // "Learn More" label before CTA
-  const trySize = 16;
-  const tryText = 'Learn More';
-  const tryW = getWidth(FONT_SEMI, tryText, trySize);
-  const tryX = ctaX - ctaPadX - 14 - tryW;
-  const tryPath = getPath(FONT_SEMI, tryText, tryX, ctaY, trySize);
-  elements.push(`<path d="${tryPath}" fill="${ORANGE}" opacity="0.8"/>`);
-
-  // Arrow
-  const arrowX = tryX + tryW + 6;
-  const arrowY = ctaY - 5;
-  elements.push(`<path d="M ${arrowX} ${arrowY} l 6 0 l -2 -2 M ${arrowX + 6} ${arrowY} l -2 2" stroke="${ORANGE}" stroke-width="1.5" fill="none" opacity="0.6"/>`);
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">

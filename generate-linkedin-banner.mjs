@@ -118,7 +118,7 @@ function generateBanner() {
   const infoSize = 20;
   const infoY = sepY + 34;
 
-  const infoText = 'U.S. Patents Pending: 63/948,559 \u00B7 63/994,876 \u00B7 64/011,252';
+  const infoText = 'U.S. Patents Pending: 63/948,559 \u00B7 63/994,876 \u00B7 64/011,252 \u00B7 64/017,488';
   const infoW = getWidth(FONT_MONO, infoText, infoSize);
   const infoX = contentRight - infoW;
   const infoPath = getPath(FONT_MONO, infoText, infoX, infoY, infoSize);
