@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 
 const FONT_SEMI = opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-SemiBold.ttf');
-const FONT_REG = opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Regular.ttf');
 const FONT_LIGHT = opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Light.ttf');
 const FONT_MEDIUM = opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Medium.ttf');
 const FONT_MONO = opentype.loadSync('./fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf');
@@ -13,8 +12,6 @@ const ORANGE = '#DB4A2B';
 const GREEN = '#147B58';
 const DARK = '#111119';
 const WHITE = '#FFFFFF';
-const MUTED = '#6B7A8D';
-const LIGHT_MUTED = '#8899AA';
 
 const OUTPUT_DIR = './output/social';
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -40,8 +37,16 @@ function getBounds(font, text, x, y, fontSize) {
 const W = 1500;
 const H = 500;
 
-// Profile photo overlap zone: approximately left 0-120px, bottom 130px on desktop
-// Safe zone for important content: right/center, avoid bottom-left corner
+// --- Mobile-safe zone -------------------------------------------------------
+// On the X mobile app the banner is overlaid by chrome that the desktop view
+// does not have:
+//   - the device status bar across roughly the top ~28% of the banner
+//   - the Search / Edit / ellipsis buttons stacked down the RIGHT side,
+//     vertically centered
+//   - the profile avatar in the bottom-LEFT corner
+// So all primary content lives in a low band: right of the avatar
+// (x > ~470) and below the action buttons (y > ~385).
+// ---------------------------------------------------------------------------
 
 function generateCover() {
   const elements = [];
@@ -52,91 +57,57 @@ function generateCover() {
   // Top orange accent bar
   elements.push(`<rect width="${W}" height="4" fill="${ORANGE}"/>`);
 
-  // Subtle background pattern: faint O logomarks scattered
+  // Faint O logomarks — kept high and sparse so they never crowd the content
   const oPositions = [
-    { x: 100, y: 150, size: 200, opacity: 0.02 },
-    { x: 380, y: 320, size: 140, opacity: 0.015 },
-    { x: 600, y: 100, size: 220, opacity: 0.02 },
-    { x: 800, y: 380, size: 110, opacity: 0.015 },
-    { x: 200, y: 420, size: 100, opacity: 0.012 },
+    { x: 120, y: 250, size: 240, opacity: 0.022 },
+    { x: 700, y: 150, size: 180, opacity: 0.018 },
+    { x: 1150, y: 290, size: 210, opacity: 0.020 },
   ];
-
   for (const pos of oPositions) {
-    const oPath = getPath(FONT_SEMI, 'O', pos.x, pos.y, pos.size);
-    elements.push(`<path d="${oPath}" fill="${GREEN}" opacity="${pos.opacity}"/>`);
-  }
-
-  // Subtle grid lines suggesting "infrastructure"
-  for (let x = 460; x < W - 40; x += 80) {
-    elements.push(`<line x1="${x}" y1="20" x2="${x}" y2="${H - 20}" stroke="${WHITE}" stroke-width="0.3" opacity="0.02"/>`);
-  }
-  for (let y = 40; y < H - 20; y += 60) {
-    elements.push(`<line x1="460" y1="${y}" x2="${W - 40}" y2="${y}" stroke="${WHITE}" stroke-width="0.3" opacity="0.02"/>`);
+    elements.push(`<path d="${getPath(FONT_SEMI, 'O', pos.x, pos.y, pos.size)}" fill="${GREEN}" opacity="${pos.opacity}"/>`);
   }
 
   // ============================================================
-  // RIGHT SIDE: Logo + Tagline + CTA (primary content)
+  // BOTTOM BAND — logo + tagline + reference (mobile-safe zone)
   // ============================================================
-  const rightMargin = 80;
-  const contentRight = W - rightMargin;
+  const safeLeft = 470;
 
-  // askOdin logo - right aligned
-  const logoSize = 62;
-  const askText = 'ask';
-  const odinText = 'Odin';
-  const askW = getWidth(FONT_SEMI, askText, logoSize);
-  const odinW = getWidth(FONT_SEMI, odinText, logoSize);
+  // --- askOdin logo (left of band) ---
+  const logoSize = 72;
+  const logoBaselineY = 440;
+  const askW = getWidth(FONT_SEMI, 'ask', logoSize);
+  const odinW = getWidth(FONT_SEMI, 'Odin', logoSize);
   const logoTotalW = askW + odinW;
-  const logoX = contentRight - logoTotalW;
-  const logoY = 145;
 
-  const askPath = getPath(FONT_SEMI, askText, logoX, logoY, logoSize);
-  const odinPath = getPath(FONT_SEMI, odinText, logoX + askW, logoY, logoSize);
+  elements.push(`<path d="${getPath(FONT_SEMI, 'ask', safeLeft, logoBaselineY, logoSize)}" fill="${ORANGE}"/>`);
+  elements.push(`<path d="${getPath(FONT_SEMI, 'Odin', safeLeft + askW, logoBaselineY, logoSize)}" fill="${GREEN}"/>`);
 
-  elements.push(`<path d="${askPath}" fill="${ORANGE}"/>`);
-  elements.push(`<path d="${odinPath}" fill="${GREEN}"/>`);
+  // --- vertical separator between logo and tagline ---
+  const sepX = safeLeft + logoTotalW + 40;
+  elements.push(`<line x1="${sepX}" y1="390" x2="${sepX}" y2="441" stroke="${GREEN}" stroke-width="2" opacity="0.6"/>`);
 
-  // Tagline
-  const tagSize = 30;
-  const tagText = 'The Last Mile of AI Isn\'t Information. It\'s Judgment.';
-  const tagW = getWidth(FONT_LIGHT, tagText, tagSize);
-  const tagX = contentRight - tagW;
-  const tagY = logoY + 55;
+  // --- tagline, two lines, beside the logo ---
+  const tagSize = 26;
+  const tagX = sepX + 40;
+  elements.push(`<path d="${getPath(FONT_LIGHT, 'The Last Mile of AI Isn’t', tagX, 408, tagSize)}" fill="${WHITE}"/>`);
+  elements.push(`<path d="${getPath(FONT_LIGHT, 'Information. It’s Judgment.', tagX, 441, tagSize)}" fill="${WHITE}"/>`);
 
-  const tagPath = getPath(FONT_LIGHT, tagText, tagX, tagY, tagSize);
-  elements.push(`<path d="${tagPath}" fill="${WHITE}"/>`);
+  // --- reference line: patents ---
+  const patentSize = 17;
+  const patentText = 'U.S. Patents Pending: 63/948,559 · 63/994,876 · 64/011,252 · 64/017,488';
+  elements.push(`<path d="${getPath(FONT_MONO, patentText, safeLeft, 478, patentSize)}" fill="${WHITE}" opacity="0.5"/>`);
 
-  // Separator line
-  const sepY = tagY + 35;
-  const sepW = 70;
-  elements.push(`<line x1="${contentRight - sepW}" y1="${sepY}" x2="${contentRight}" y2="${sepY}" stroke="${ORANGE}" stroke-width="2.5"/>`);
-
-  // Sub-info line: Patent number
-  const infoSize = 20;
-  const infoY = sepY + 35;
-
-  const infoText = 'U.S. Patents Pending: 63/948,559 \u00B7 63/994,876 \u00B7 64/011,252 \u00B7 64/017,488';
-  const infoW = getWidth(FONT_MONO, infoText, infoSize);
-  const infoX = contentRight - infoW;
-  const infoPath = getPath(FONT_MONO, infoText, infoX, infoY, infoSize);
-  elements.push(`<path d="${infoPath}" fill="${WHITE}" opacity="0.7"/>`);
-
-  // CTA at bottom right
-  const ctaSize = 22;
+  // --- CTA pill: askodin.app, bottom-right (clear of avatar + buttons) ---
+  const ctaSize = 21;
   const ctaText = 'askodin.app';
+  const ctaBaselineY = 425;
   const ctaW = getWidth(FONT_MEDIUM, ctaText, ctaSize);
-  const ctaX = contentRight - ctaW;
-  const ctaY = H - 55;
-
-  // CTA pill background
+  const ctaX = (W - 70) - ctaW;
   const ctaPadX = 18;
-  const ctaPadY = 12;
-  const ctaBounds = getBounds(FONT_MEDIUM, ctaText, ctaX, ctaY, ctaSize);
+  const ctaPadY = 13;
+  const ctaBounds = getBounds(FONT_MEDIUM, ctaText, ctaX, ctaBaselineY, ctaSize);
   elements.push(`<rect x="${ctaX - ctaPadX}" y="${ctaBounds.y1 - ctaPadY}" width="${ctaW + ctaPadX * 2}" height="${ctaBounds.y2 - ctaBounds.y1 + ctaPadY * 2}" rx="5" fill="${GREEN}"/>`);
-
-  const ctaPath = getPath(FONT_MEDIUM, ctaText, ctaX, ctaY, ctaSize);
-  elements.push(`<path d="${ctaPath}" fill="${WHITE}"/>`);
-
+  elements.push(`<path d="${getPath(FONT_MEDIUM, ctaText, ctaX, ctaBaselineY, ctaSize)}" fill="${WHITE}"/>`);
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
