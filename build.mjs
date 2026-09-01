@@ -40,6 +40,7 @@ const STAGES = {
     ['generate-virtual-bg-bright.mjs',        'profile/'],
     ['generate-youtube-cover.mjs',            'profile/'],
     ['generate-podcast.mjs',                  'podcast/ — The Judgment Stack show identity'],
+    ['generate-product-hunt.mjs',             'campaigns/20260902-product-hunt/'],
     ['generate-substack-cover.mjs',           'social/20260508-the-judgment-stack/'],
     ['generate-substack-og-fork.mjs',         'social/20260821-ai-data-retention-fork/'],
     ['generate-substack-lastmile.mjs',        'social/20260428-last-mile-judgment-infrastructure/'],
