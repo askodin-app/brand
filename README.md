@@ -1,44 +1,57 @@
 # askOdin Brand Assets
 
-Generator scripts for askOdin brand assets — logos, icons, social media banners, business cards, and more.
-
-## Setup
+Every mark, card and banner in this repo is generated from source. Nothing is a
+hand-export: `output/` can be deleted and rebuilt whole.
 
 ```bash
 npm install
+npm run build          # everything, in dependency order
+npm run rebuild        # wipe output/ first, then build
 ```
 
-## Generators
+Individual stages: `npm run build:brand`, `build:social`, `build:docs`.
 
-| Script | Output |
-|--------|--------|
-| `node generate-pngs.mjs` | Logo PNGs (multiple sizes) |
-| `node generate-wordmark.mjs` | Wordmark SVG/PNG |
-| `node generate-ico.mjs` | Favicon `.ico` |
-| `node generate-linkedin-banner.mjs` | LinkedIn cover (1584x396) |
-| `node generate-twitter-cover.mjs` | Twitter/X cover (1500x500) |
-| `node generate-virtual-bg.mjs` | Virtual background (dark) |
-| `node generate-virtual-bg-bright.mjs` | Virtual background (bright) |
-| `node generate-businesscard.mjs` | Business card SVG |
-| `node generate-card-pngs.mjs` | Business card PNGs |
-| `node generate-pdf.mjs` | Brand guidelines PDF |
+## Layout
 
-## Output
+```
+build.mjs        declares the build order (it is NOT alphabetical — see below)
+generate-*.mjs   one generator per asset family
+fonts/           IBM Plex statics, vendored
+src/             hand-authored source (brand guidelines HTML)
+output/          generated — disposable
+```
 
-Generated assets are written to `output/` organized by type:
+`output/` splits on one rule: **date it when the asset is tied to a moment, leave
+it undated when it is tied to an identity.**
 
-- `output/social/` — LinkedIn banner, Twitter/X cover
-- `output/png/` — Logo rasters
-- `output/wordmark/` — Wordmark variants
-- `output/favicon/` — Favicons
-- `output/business-card/` — Business cards
-- `output/logomark/` — Logomark variants
+```
+output/
+  social/YYYYMMDD-slug/   article assets — banners/, cards/, svg/
+  profile/                X + LinkedIn headers, Zoom backgrounds, avatars
+  decks/                  DocSend and data-room banners
+  og/                     site-wide default OG mark
+  accelerator/            920x400 application marks
+  logomark/ wordmark/ combined/ favicon/ business-card/   master marks
+  png/                    rasterised versions of the above
+```
 
-## Brand
+An article banner is published once and never retro-edited, so a revision is a new
+folder and the old one is history. A favicon is the opposite: it is referenced by a
+stable path and replaced in place, so dating its folder would rot every link that
+points at it.
 
-- **Name**: askOdin (always camelCase)
-- **Fonts**: IBM Plex Sans, Serif, Mono
-- **Colors**: Orange `#DB4A2B`, Green `#147B58`, Deep Dark `#111119`
-- **U.S. Patents Pending**: 63/948,559, 63/994,876, 64/011,252, 64/017,488
+## Build order
 
-See `CLAUDE.md` for full brand guidelines.
+`build.mjs` declares the order because several generators rasterise SVGs that an
+earlier generator writes. Running the directory alphabetically produces a silently
+incomplete `output/` — the rasterisers find nothing to read and exit cleanly. Add
+new generators to a stage in that file rather than relying on filename order.
+
+## Fonts
+
+Generators convert text to vector paths with `opentype.js`, reading the TTFs in
+`fonts/`. That is why output is byte-reproducible on any machine: nothing depends
+on a system-installed font. The `@ibm/plex` npm package ships only woff/woff2 and
+cannot replace these.
+
+See `CLAUDE.md` for colours, type scale and the full asset convention.

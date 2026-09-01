@@ -87,6 +87,15 @@ shared directory — every run belongs to a named batch.
 Point the generator's `ASSET_DIR` at that folder and let it write there. The script,
 not a later `mv`, is the source of truth: re-running must reproduce the folder exactly.
 
+**`output/` is disposable.** `npm run rebuild` wipes it and regenerates everything.
+Anything hand-authored — the brand guidelines HTML, say — lives in `src/`, because
+whatever sits in `output/` will eventually be deleted by a clean build.
+
+**Build order is declared, not alphabetical.** `build.mjs` owns it. Several
+generators rasterise SVGs an earlier generator writes, so running the directory
+in filename order silently produces an incomplete `output/` — the rasterisers find
+nothing to read and skip without erroring. Add new generators to a stage there.
+
 ### Date it, or don't
 
 The one rule that decides the folder name:
@@ -100,21 +109,25 @@ The one rule that decides the folder name:
 
 | Scenario | Folder | Dated |
 |---|---|---|
-| Article / essay assets | `output/social/YYYYMMDD-Title/` | ✅ |
-| Campaign or launch push | `output/campaigns/YYYYMMDD-Name/` | ✅ |
-| Event, conference, demo day | `output/events/YYYYMMDD-EventName/` | ✅ |
-| Investor deck & data-room covers | `output/decks/YYYYMMDD-Audience/` | ✅ |
-| Logo, wordmark, favicon, app icons | `output/{logomark,wordmark,favicon,png}/` | ❌ |
-| Profile furniture (X/LinkedIn header, Zoom bg) | `output/profile/` | ❌ |
-| Site OG cards for static routes | `output/og/` | ❌ |
+| Article / essay assets | `output/social/YYYYMMDD-slug/` | ✅ |
+| Campaign or launch push | `output/campaigns/YYYYMMDD-name/` | ✅ |
+| Event, conference, demo day | `output/events/YYYYMMDD-name/` | ✅ |
+| DocSend / data-room banners | `output/decks/` | ❌ |
+| Logo, wordmark, favicon, app icons | `output/{logomark,wordmark,combined,favicon,png}/` | ❌ |
+| Profile furniture (X/LinkedIn header, Zoom bg, avatars) | `output/profile/` | ❌ |
+| Site-wide default OG mark | `output/og/` | ❌ |
+| Accelerator / application marks | `output/accelerator/` | ❌ |
 
 Dated folders use the publication date (`pubDate` in the article frontmatter), not
-the date the images were generated.
+the date the images were generated, and the **URL slug** rather than the prose title:
+`20260901-faking-judgment-is-easy` resolves against
+`/insights/faking-judgment-is-easy/` in both directions. Prose titles need shell
+quoting and drift when an editor rewrites the headline.
 
 ### Inside a dated folder
 
 ```
-20260901-Faking Judgment Is Easy/
+20260901-faking-judgment-is-easy/
   banners/   headline + OG cards — the article's identity
   cards/     data, stat and pull-quote cards
   svg/       source SVGs for both

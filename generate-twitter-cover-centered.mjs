@@ -9,7 +9,9 @@ const ORANGE = '#DB4A2B';
 const GREEN = '#147B58';
 const DARK = '#111119';
 
-const OUTPUT_DIR = './output/social';
+// X/Twitter profile header — identity furniture, replaced in place rather than published
+// once, so it lives at a stable undated path.
+const OUTPUT_DIR = './output/profile';
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 function getPath(font, text, x, y, fontSize) {

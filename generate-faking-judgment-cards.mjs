@@ -29,7 +29,7 @@ const WATCH = '#F9A825';
 
 // Same publication folder as generate-faking-judgment.mjs — banners and data
 // cards for one article ship together.
-const ASSET_DIR = './output/social/20260901-Faking Judgment Is Easy';
+const ASSET_DIR = './output/social/20260901-faking-judgment-is-easy';
 const PNG_DIR = path.join(ASSET_DIR, 'cards');
 const SVG_DIR = path.join(ASSET_DIR, 'svg');
 for (const d of [PNG_DIR, SVG_DIR]) fs.mkdirSync(d, { recursive: true });

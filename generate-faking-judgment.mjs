@@ -15,7 +15,7 @@ const WHITE = '#FFFFFF';
 
 // One folder per publication. Deliverable PNGs sit in banners/ and cards/ so
 // they can be grabbed without hunting; the source SVGs are tucked into svg/.
-const ASSET_DIR = './output/social/20260901-Faking Judgment Is Easy';
+const ASSET_DIR = './output/social/20260901-faking-judgment-is-easy';
 const PNG_DIR = path.join(ASSET_DIR, 'banners');
 const SVG_DIR = path.join(ASSET_DIR, 'svg');
 for (const d of [PNG_DIR, SVG_DIR]) fs.mkdirSync(d, { recursive: true });

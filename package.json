@@ -1,0 +1,24 @@
+{
+  "name": "askodin-logo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:brand": "node build.mjs brand",
+    "build:social": "node build.mjs social",
+    "build:docs": "node build.mjs docs",
+    "clean": "rm -rf output",
+    "rebuild": "npm run clean && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "askOdin brand assets \u2014 every mark, card and banner generated from source",
+  "dependencies": {
+    "@ibm/plex": "^6.4.1",
+    "@napi-rs/canvas": "^0.1.92",
+    "opentype.js": "^1.3.4",
+    "puppeteer": "^24.37.2",
+    "sharp": "^0.34.5"
+  }
+}

@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# WSL/Windows download artifacts — one per downloaded file, pure noise
+*:Zone.Identifier

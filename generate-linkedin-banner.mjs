@@ -16,7 +16,9 @@ const WHITE = '#FFFFFF';
 const MUTED = '#6B7A8D';
 const LIGHT_MUTED = '#8899AA';
 
-const OUTPUT_DIR = './output/social';
+// LinkedIn profile banner — identity furniture, replaced in place rather than published
+// once, so it lives at a stable undated path.
+const OUTPUT_DIR = './output/profile';
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 function getPath(font, text, x, y, fontSize) {
