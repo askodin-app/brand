@@ -110,6 +110,7 @@ The one rule that decides the folder name:
 | Scenario | Folder | Dated |
 |---|---|---|
 | Article / essay assets | `output/social/YYYYMMDD-slug/` | ✅ |
+| Research paper / SSRN covers | `output/social/YYYYMMDD-slug/` | ✅ |
 | Campaign or launch push | `output/campaigns/YYYYMMDD-name/` | ✅ |
 | Event, conference, demo day | `output/events/YYYYMMDD-name/` | ✅ |
 | DocSend / data-room banners | `output/decks/` | ❌ |
@@ -118,8 +119,11 @@ The one rule that decides the folder name:
 | Site-wide default OG mark | `output/og/` | ❌ |
 | Accelerator / application marks | `output/accelerator/` | ❌ |
 
-Dated folders use the publication date (`pubDate` in the article frontmatter), not
-the date the images were generated, and the **URL slug** rather than the prose title:
+Dated folders use the publication date — `pubDate` in an article's frontmatter, or
+`datePublished` in the ScholarlyArticle schema for a paper — not the date the images
+were generated. A generator's file mtime is not a substitute: the Last Mile covers
+were filed four months off that way before the schema was checked. Name the folder
+with the **URL slug** rather than the prose title:
 `20260901-faking-judgment-is-easy` resolves against
 `/insights/faking-judgment-is-easy/` in both directions. Prose titles need shell
 quoting and drift when an editor rewrites the headline.

@@ -13,9 +13,12 @@ const GREEN = '#147B58';
 const DARK = '#111119';
 const WHITE = '#FFFFFF';
 
-// One folder per publication, dated by the article's pubDate and named with
-// its URL slug so the folder and the published route resolve to each other.
-const ASSET_DIR = './output/social/20260825-the-last-mile-of-ai';
+// Substack covers for the SSRN working paper, not an insights article — dated by
+// the paper's datePublished (2026-04-28, per the ScholarlyArticle schema on
+// src/pages/research.astro in askodin-coming-soon) and slugged to match the
+// hosted PDF at /research/askodin-last-mile-judgment-infrastructure-2026-04.pdf.
+//   SSRN: https://ssrn.com/abstract=6664200  ·  DOI: 10.2139/ssrn.6664200
+const ASSET_DIR = './output/social/20260428-last-mile-judgment-infrastructure';
 const PNG_DIR = path.join(ASSET_DIR, 'banners');
 const SVG_DIR = path.join(ASSET_DIR, 'svg');
 for (const d of [PNG_DIR, SVG_DIR]) fs.mkdirSync(d, { recursive: true });
