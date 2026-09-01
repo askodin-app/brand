@@ -116,8 +116,16 @@ The one rule that decides the folder name:
 | DocSend / data-room banners | `output/decks/` | ❌ |
 | Logo, wordmark, favicon, app icons | `output/{logomark,wordmark,combined,favicon,png}/` | ❌ |
 | Profile furniture (X/LinkedIn header, Zoom bg, avatars) | `output/profile/` | ❌ |
+| Podcast show identity (cover, avatars, channel art) | `output/podcast/` | ❌ |
+| Podcast episode art | `output/podcast/episodes/YYYYMMDD-slug/` | ✅ |
 | Site-wide default OG mark | `output/og/` | ❌ |
 | Accelerator / application marks | `output/accelerator/` | ❌ |
+
+**The podcast owns its whole namespace.** Episode art does not go in `output/social/`,
+even though it is dated like an article. The show and the Substack essay series share the
+name *The Judgment Stack* but publish on independent schedules, and filing an episode
+beside an essay makes two unrelated release cadences look like one. Episodes are dated by
+the publication date and named with the episode slug, inside `output/podcast/episodes/`.
 
 Dated folders use the publication date — `pubDate` in an article's frontmatter, or
 `datePublished` in the ScholarlyArticle schema for a paper — not the date the images
