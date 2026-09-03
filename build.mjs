@@ -47,6 +47,8 @@ const STAGES = {
     ['generate-substack-diligence-stack.mjs', 'social/20260828-the-diligence-stack/'],
     ['generate-faking-judgment.mjs',          'social/20260901-faking-judgment-is-easy/'],
     ['generate-faking-judgment-cards.mjs',    'social/20260901-faking-judgment-is-easy/'],
+    ['generate-substack-investor-views.mjs',  'social/20260903-what-358672-investor-views-taught-me-about-pitch-decks/'],
+    ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
   ],
   // Reads src/askOdin-Brand-Guidelines.html through headless Chrome.
   docs: [

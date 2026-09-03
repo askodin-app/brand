@@ -118,6 +118,7 @@ The one rule that decides the folder name:
 | Profile furniture (X/LinkedIn header, Zoom bg, avatars) | `output/profile/` | ❌ |
 | Podcast show identity (cover, avatars, channel art) | `output/podcast/` | ❌ |
 | Podcast episode art | `output/podcast/episodes/YYYYMMDD-slug/` | ✅ |
+| Product proof fragments for a marketing page | `output/crucible/` | ❌ |
 | Site-wide default OG mark | `output/og/` | ❌ |
 | Accelerator / application marks | `output/accelerator/` | ❌ |
 
