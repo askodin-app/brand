@@ -15,13 +15,12 @@
 // edits here and doubles the output resolution. That upgrade is worth making:
 // at 1x the single-card plates render soft on retina displays.
 //
-// The three score cards are COMPOSED, not cropped whole: each card's verdict
-// summary runs 2-4 lines depending on the deck, so cropping the card entire
-// gives three images of different heights that cannot sit in one grid row.
-// Instead the score panel and the sub-score bar row are lifted separately and
-// stacked at a fixed rhythm, which makes all three exactly 890x319. The
-// summary prose is not lost — it becomes the caption in crucible.astro, where
-// it is live text rather than baked pixels.
+// The three score cards are CROPPED TO THE PANEL, not taken whole: each card's
+// verdict summary runs 2-4 lines depending on the deck, so the full card gives
+// three images of different heights that cannot sit in one grid row. Lifting
+// just the score panel makes all three exactly 890x235. The summary prose is
+// not lost — it becomes the caption in crucible.astro, where it is live text
+// rather than baked pixels. See PANEL_H for why the bar row is excluded too.
 //
 // Output is 890px wide against a ~397px display slot (1240px container, three
 // columns, 24px gaps), i.e. 2.2x — already retina without any upscaling, which
@@ -50,24 +49,27 @@ const CARD_BG = '#1A2332';
 
 const RADIUS = 14;
 
-// Score-card geometry, measured per capture. cardTop is the card's top border;
-// barTrack is the first row of the coloured sub-score bars.
+// Score-card geometry, measured per capture: cardTop is the card's top border.
 const SCORE_CARDS = [
-  { slug: 'theranos', file: 'theranos-results.png', cardTop: 443, barTrack: 731 },
-  { slug: 'airbnb', file: 'airbnb-results.png', cardTop: 443, barTrack: 783 },
-  { slug: 'pass', file: 'pass-results.png', cardTop: 932, barTrack: 1272 },
+  { slug: 'theranos', file: 'theranos-results.png', cardTop: 443 },
+  { slug: 'airbnb', file: 'airbnb-results.png', cardTop: 443 },
+  { slug: 'pass', file: 'pass-results.png', cardTop: 932 },
 ];
 
-// Height of the lifted score panel block (card top border → below the badge)
-// and of the bar row (track → below the numeric values). Both are constant
-// across decks; only the summary between them varies, and it is excluded.
+// Height of the lifted score panel block: card top border → below the verdict
+// badge. Everything below it is deliberately excluded.
+//
+// The app's score card also carries a row of four sub-score bars labelled Story
+// Quality / Market Evidence / Unit Economics / Team Signal. Those are NOT engine
+// axes — the site's check-engine-claims guard rejects "Story Quality" and "Team
+// Signal" outright, because the engine scores five sections published as Problem
+// Definition, Solution Logic, Market Evidence, Business Model Physics and Deal
+// Structure. Cropping the row out keeps retired vocabulary from being published
+// as pixels, where no text guard could ever catch it. The real axes still appear
+// on the site, correctly, in the Score Breakdown fragment below.
 const PANEL_H = 211;
-const BARS_H = 68;
-// Breathing room where the summary prose used to sit. Without it the bars
-// crowd the badge and the card reads as cramped rather than composed.
-const STACK_GAP = 16;
 const FOOT_PAD = 24;
-const SCORE_H = PANEL_H + STACK_GAP + BARS_H + FOOT_PAD;
+const SCORE_H = PANEL_H + FOOT_PAD;
 
 // Whole-card fragments, cropped as-is. The window is a generous bracket; the
 // exact border is found by scanning, so a recapture that shifts content by a
@@ -153,7 +155,7 @@ async function writeRounded(buffer, width, height, name, k = 1) {
   console.log(`  ${name}.png`.padEnd(42), `${width}x${height}`);
 }
 
-async function buildScoreCard({ slug, file, cardTop, barTrack }) {
+async function buildScoreCard({ slug, file, cardTop }) {
   const src = `${SRC}/${file}`;
   const k = await scaleOf(file);
   const px = (v) => Math.round(v * k);
@@ -161,19 +163,13 @@ async function buildScoreCard({ slug, file, cardTop, barTrack }) {
   const panel = await sharp(src)
     .extract({ left: px(CARD_X), top: px(cardTop), width: px(CARD_W), height: px(PANEL_H) })
     .toBuffer();
-  const bars = await sharp(src)
-    .extract({ left: px(CARD_X), top: px(barTrack - 14), width: px(CARD_W), height: px(BARS_H) })
-    .toBuffer();
 
   const width = px(CARD_W);
   const height = px(SCORE_H);
   const composed = await sharp({
     create: { width, height, channels: 4, background: CARD_BG },
   })
-    .composite([
-      { input: panel, top: 0, left: 0 },
-      { input: bars, top: px(PANEL_H + STACK_GAP), left: 0 },
-    ])
+    .composite([{ input: panel, top: 0, left: 0 }])
     .png()
     .toBuffer();
 
