@@ -213,7 +213,7 @@ function front() {
 
   // Positioning and defensibility
   el.push(text('Building AI Judgment Infrastructure™', SAFE_L, 37.4, pt(7), { font: F.light, fill: WHITE }).svg);
-  el.push(text('U.S. Patents Pending (4 Applications)',      SAFE_L, 42.0, pt(5.5), { font: F.mono, fill: MUTED }).svg);
+  el.push(text('U.S. Patents Pending', SAFE_L, 41.4, pt(5.5), { font: F.mono, fill: MUTED }).svg);
 
   // QR, bottom-right, inside the safe box
   const QR_BOX = 13.0, QUIET = 1.5;
@@ -263,9 +263,9 @@ function back() {
   // reads flush with the block above it.
   const catSize = pt(7.5);
   el.push(text('「資本配分のためのAI判断インフラ™」',
-    SAFE_L - lsb('「', catSize, jp), 40.5, catSize, { ...jp, fill: DARK }).svg);
-  el.push(text('米国特許出願中（4件）',
-    SAFE_L, 44.2, pt(6), { ...jp, fill: MUTED }).svg);
+    SAFE_L - lsb('「', catSize, jp), 39.8, catSize, { ...jp, fill: DARK }).svg);
+  el.push(text('米国特許出願中',
+    SAFE_L, 42.9, pt(5.5), { ...jp, fill: MUTED }).svg);
 
   // Logomark, bottom-right, matching the QR's optical corner on the front
   const LOGO = 8.0;

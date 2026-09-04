@@ -298,7 +298,7 @@ function generateBackDark() {
 
   // Patent line at very bottom
   const patentSize = 1.6;
-  const patentText = 'U.S. Patents Pending (4 Applications)';
+  const patentText = 'U.S. Patents Pending';
   const patentW = getWidth(fontRegular, patentText, patentSize);
   const patentX = centerX - patentW / 2;
   const patentY = SAFE_BOTTOM - 1;
@@ -366,7 +366,7 @@ function generateBackLight() {
 
   // Patent
   const patentSize = 1.6;
-  const patentText = 'U.S. Patents Pending (4 Applications)';
+  const patentText = 'U.S. Patents Pending';
   const patentW = getWidth(fontRegular, patentText, patentSize);
   const patentX = centerX - patentW / 2;
   const patentY = SAFE_BOTTOM - 1;
