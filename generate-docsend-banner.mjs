@@ -43,6 +43,12 @@ const RIGHT = W - MARGIN;
 
 const PATENTS = 'U.S. PATENTS PENDING · 63/948,559 · 63/994,876 · 64/011,252 · 64/017,488';
 
+// The four numbers set legibly on a deck cover, but DocSend renders this 1920px
+// banner into roughly a 1200px container (~0.63 scale), which lands the mono line
+// near 12px and drops it entirely on mobile. The tight variant states the fact and
+// leaves the numbers to the deck cover and footer, where they can be read and checked.
+const PATENTS_SHORT = 'U.S. PATENTS PENDING · 4 FILINGS';
+
 // Shared chrome: orange hairline, fading grid, one oversized faint O on the right.
 function backdrop() {
   const el = [];
@@ -73,13 +79,15 @@ function rule(y) {
   return `<line x1="${RIGHT - 56}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="${ORANGE}" stroke-width="3"/>`;
 }
 
-function patentLine(y) {
-  const x = RIGHT - getWidth(FONT_MONO, PATENTS, 19);
-  return `<path d="${getPath(FONT_MONO, PATENTS, x, y, 19)}" fill="${WHITE}" opacity="0.6"/>`;
+function patentLine(y, text = PATENTS) {
+  const x = RIGHT - getWidth(FONT_MONO, text, 19);
+  return `<path d="${getPath(FONT_MONO, text, x, y, 19)}" fill="${WHITE}" opacity="0.6"/>`;
 }
 
 // Variant A — investor Space: the category analogy.
-function variantInvestor() {
+// Parameterised on the patent copy only: A and A-tight are the same composition,
+// so a change to the ladder cannot drift between them.
+function investorLadder(patents) {
   const el = backdrop();
   const size = 46;
   const leading = 58;
@@ -104,9 +112,12 @@ function variantInvestor() {
   el.push(`<path d="${getPath(FONT_SEMI, tail, headX + headW, y, size)}" fill="${ORANGE}"/>`);
 
   el.push(rule(y + 38));
-  el.push(patentLine(y + 80));
+  el.push(patentLine(y + 80, patents));
   return el;
 }
+
+const variantInvestor = () => investorLadder(PATENTS);
+const variantInvestorTight = () => investorLadder(PATENTS_SHORT);
 
 // Variant B — design partner / enterprise buyer Space: capability over category.
 function variantOperator() {
@@ -153,6 +164,7 @@ async function emit(name, svg) {
 async function main() {
   console.log('=== DocSend Space Banner Generator (1920x480, 4:1) ===\n');
   await emit('askOdin-docsend-banner-investor', svgFor('askOdin DocSend Banner — Investor', variantInvestor()));
+  await emit('askOdin-docsend-banner-investor-tight', svgFor('askOdin DocSend Banner — Investor (tight)', variantInvestorTight()));
   await emit('askOdin-docsend-banner-operator', svgFor('askOdin DocSend Banner — Operator', variantOperator()));
 }
 
