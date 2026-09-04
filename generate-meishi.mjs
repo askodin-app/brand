@@ -311,6 +311,40 @@ async function proof(svgStr, outPath) {
     .png().toFile(outPath);
 }
 
+/**
+ * Review PDF: both faces, one per page, at trim size and still vector — so a
+ * reviewer sees the card at the size it will be held and can zoom into the
+ * Japanese without hitting pixels. This is a REVIEW artefact, not the print
+ * file: it carries no bleed, and it is RGB.
+ */
+async function reviewPdf(faces, outPath) {
+  const { default: puppeteer } = await import('puppeteer');
+  const TW = BLEED_W - TRIM * 2, TH = BLEED_H - TRIM * 2;
+  const trimmed = (svgStr) => svgStr
+    .replace(/<\?xml[^>]*\?>/, '')
+    .replace(`width="${BLEED_W}mm" height="${BLEED_H}mm"`, `width="${TW}mm" height="${TH}mm"`)
+    .replace(`viewBox="0 0 ${BLEED_W} ${BLEED_H}"`, `viewBox="${TRIM} ${TRIM} ${TW} ${TH}"`);
+
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    @page { size: ${TW}mm ${TH}mm; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    .face { width: ${TW}mm; height: ${TH}mm; overflow: hidden; break-after: page; }
+    .face:last-child { break-after: auto; }
+    svg { display: block; }
+  </style></head><body>${faces.map((f) => `<div class="face">${trimmed(f)}</div>`).join('')}</body></html>`;
+
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+  });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'load' });
+  await page.pdf({ path: outPath, width: `${TW}mm`, height: `${TH}mm`,
+                   printBackground: true, preferCSSPageSize: true });
+  await browser.close();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 const f = front();
 const b = back();
@@ -318,9 +352,11 @@ fs.writeFileSync(path.join(OUTPUT_DIR, 'card_front_en.svg'), f.svg);
 fs.writeFileSync(path.join(OUTPUT_DIR, 'card_back_ja.svg'), b.svg);
 await proof(f.svg, path.join(OUTPUT_DIR, 'card_front_en-proof.png'));
 await proof(b.svg, path.join(OUTPUT_DIR, 'card_back_ja-proof.png'));
+await reviewPdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-review.pdf'));
 
 console.log('=== Osaka meishi ===');
 console.log(`  card_front_en.svg   ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
 console.log(`  card_back_ja.svg    ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
 console.log(`  *-proof.png         trimmed 600dpi proofs`);
+console.log(`  card_meishi-review.pdf  2pp vector, trim size — review only, no bleed`);
 console.log(`  QR  v${f.qr.version} ${f.qr.modules}x${f.qr.modules} EC-${QR_EC} · module ${f.qr.module.toFixed(3)}mm · ${QR_URL}`);
