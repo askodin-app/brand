@@ -31,12 +31,22 @@ const WHITE  = '#FFFFFF';
 const MUTED  = '#8899AA';
 
 // ── Geometry (mm) ────────────────────────────────────────────────────────────
-// Japanese meishi trim is 91 x 55. Bleed adds 2mm on every side; the safe box is
-// a further 3mm in, which is the 85 x 49 the spec asks us to keep text inside.
-const BLEED_W = 95.0, BLEED_H = 59.0;
-const TRIM    = 2.0;                       // bleed margin on each edge
-const SAFE    = 5.0;                       // safe-area inset from the bleed edge
+// Trim is meishi 4-gou (名刺4号), 91 x 55, and never moves. Bleed is the one knob:
+// Japanese trade printers (Raksul, Graphic) specify 3mm nurishiashi and their
+// automated pre-flight rejects less, so TRIM is 3.0 and the canvas is 97 x 61.
+// A 2mm US/SG house would set TRIM = 2.0 and get 95 x 59 back.
+//
+// Everything below is expressed against the safe box rather than the canvas, so
+// changing the bleed moves the paper edge and leaves the composition untouched.
+const TRIM_W = 91.0, TRIM_H = 55.0;        // finished card
+const TRIM    = 3.0;                       // bleed margin on each edge
+const SAFE_IN = 3.0;                       // safe-area inset from the trim line
+const BLEED_W = TRIM_W + TRIM * 2, BLEED_H = TRIM_H + TRIM * 2;
+const SAFE    = TRIM + SAFE_IN;            // safe-area inset from the bleed edge
 const SAFE_L = SAFE, SAFE_R = BLEED_W - SAFE, SAFE_T = SAFE, SAFE_B = BLEED_H - SAFE;
+
+/** A baseline given as millimetres below the top of the safe box. */
+const y = (offset) => SAFE_T + offset;
 
 const PT = 25.4 / 72;                      // 1pt in mm
 const pt = (n) => n * PT;
@@ -207,13 +217,13 @@ function front() {
   el.push(mark.svg);
 
   // Executive identity
-  el.push(text('LOK Yek Soon',    SAFE_L, 21.6, pt(11), { font: F.semibold, fill: WHITE }).svg);
-  el.push(text('Founder & CEO',   SAFE_L, 26.4, pt(8),  { font: F.regular,  fill: MUTED }).svg);
-  el.push(text('askOdin Pte Ltd', SAFE_L, 30.4, pt(8),  { font: F.regular,  fill: MUTED }).svg);
+  el.push(text('LOK Yek Soon',    SAFE_L, y(16.6), pt(11), { font: F.semibold, fill: WHITE }).svg);
+  el.push(text('Founder & CEO',   SAFE_L, y(21.4), pt(8),  { font: F.regular,  fill: MUTED }).svg);
+  el.push(text('askOdin Pte Ltd', SAFE_L, y(25.4), pt(8),  { font: F.regular,  fill: MUTED }).svg);
 
   // Positioning and defensibility
-  el.push(text('Building AI Judgment Infrastructure™', SAFE_L, 37.4, pt(7), { font: F.light, fill: WHITE }).svg);
-  el.push(text('U.S. Patents Pending', SAFE_L, 41.4, pt(5.5), { font: F.mono, fill: MUTED }).svg);
+  el.push(text('Building AI Judgment Infrastructure™', SAFE_L, y(32.4), pt(7), { font: F.light, fill: WHITE }).svg);
+  el.push(text('U.S. Patents Pending', SAFE_L, y(36.4), pt(5.5), { font: F.mono, fill: MUTED }).svg);
 
   // QR, bottom-right, inside the safe box
   const QR_BOX = 13.0, QUIET = 1.5;
@@ -246,26 +256,26 @@ function back() {
   const jp = { font: F.regular, jpFont: F.jp };
 
   // Company
-  el.push(text('askOdin Pte Ltd', SAFE_L, 9.0, pt(8), { font: F.semibold, fill: DARK }).svg);
+  el.push(text('askOdin Pte Ltd', SAFE_L, y(4), pt(8), { font: F.semibold, fill: DARK }).svg);
   el.push(text('アスクオーディン（シンガポール法人）',
-    SAFE_L, 13.0, pt(6.5), { ...jp, fill: MUTED }).svg);
+    SAFE_L, y(8), pt(6.5), { ...jp, fill: MUTED }).svg);
 
   // Executive identity
   el.push(text('創業者 兼 代表取締役CEO',
-    SAFE_L, 19.5, pt(7.5), { font: F.medium, jpFont: F.jpMedium, fill: GREEN }).svg);
+    SAFE_L, y(14.5), pt(7.5), { font: F.medium, jpFont: F.jpMedium, fill: GREEN }).svg);
   el.push(text('ロック・イェック・スーン',
-    SAFE_L, 23.4, pt(5.5), { ...jp, fill: MUTED, tracking: 0.05 }).svg);
+    SAFE_L, y(18.4), pt(5.5), { ...jp, fill: MUTED, tracking: 0.05 }).svg);
   el.push(text('陸 奕 順',
-    SAFE_L, 30.5, pt(13), { font: F.jpBold, jpFont: F.jpBold, fill: DARK, tracking: 0.15 }).svg);
-  el.push(text('LOK Yek Soon', SAFE_L, 34.8, pt(7), { font: F.regular, fill: MUTED }).svg);
+    SAFE_L, y(25.5), pt(13), { font: F.jpBold, jpFont: F.jpBold, fill: DARK, tracking: 0.15 }).svg);
+  el.push(text('LOK Yek Soon', SAFE_L, y(29.8), pt(7), { font: F.regular, fill: MUTED }).svg);
 
   // Category and patents. The opening bracket hangs into the margin so the line
   // reads flush with the block above it.
   const catSize = pt(7.5);
   el.push(text('「資本配分のためのAI判断インフラ™」',
-    SAFE_L - lsb('「', catSize, jp), 39.8, catSize, { ...jp, fill: DARK }).svg);
+    SAFE_L - lsb('「', catSize, jp), y(34.8), catSize, { ...jp, fill: DARK }).svg);
   el.push(text('米国特許出願中',
-    SAFE_L, 42.9, pt(5.5), { ...jp, fill: MUTED }).svg);
+    SAFE_L, y(37.9), pt(5.5), { ...jp, fill: MUTED }).svg);
 
   // Logomark, bottom-right, matching the QR's optical corner on the front
   const LOGO = 8.0;
