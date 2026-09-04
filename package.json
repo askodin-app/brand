@@ -13,12 +13,13 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "description": "askOdin brand assets \u2014 every mark, card and banner generated from source",
+  "description": "askOdin brand assets — every mark, card and banner generated from source",
   "dependencies": {
     "@ibm/plex": "^6.4.1",
     "@napi-rs/canvas": "^0.1.92",
     "opentype.js": "^1.3.4",
     "puppeteer": "^24.37.2",
+    "qrcode": "^1.5.4",
     "sharp": "^0.34.5"
   }
 }
