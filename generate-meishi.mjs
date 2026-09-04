@@ -322,26 +322,32 @@ async function proof(svgStr, outPath) {
 }
 
 /**
- * Review PDF: both faces, one per page, at trim size and still vector — so a
- * reviewer sees the card at the size it will be held and can zoom into the
- * Japanese without hitting pixels. This is a REVIEW artefact, not the print
- * file: it carries no bleed, and it is RGB.
+ * Both faces, one per page, vector throughout.
+ *
+ *   bleed: false — trim size, for review. The card at the size it is held.
+ *   bleed: true  — full canvas, for the printer. Carries the 3mm bleed.
+ *
+ * Neither is PDF/X-1a and both are RGB: converting to CMYK, assigning Japan
+ * Color 2001 Coated and building the dark as a rich black are pre-press steps
+ * that need an ICC workflow this repo does not have. See the print README.
  */
-async function reviewPdf(faces, outPath) {
+async function makePdf(faces, outPath, { bleed }) {
   const { default: puppeteer } = await import('puppeteer');
-  const TW = BLEED_W - TRIM * 2, TH = BLEED_H - TRIM * 2;
-  const trimmed = (svgStr) => svgStr
-    .replace(/<\?xml[^>]*\?>/, '')
-    .replace(`width="${BLEED_W}mm" height="${BLEED_H}mm"`, `width="${TW}mm" height="${TH}mm"`)
-    .replace(`viewBox="0 0 ${BLEED_W} ${BLEED_H}"`, `viewBox="${TRIM} ${TRIM} ${TW} ${TH}"`);
+  const W = bleed ? BLEED_W : TRIM_W, H = bleed ? BLEED_H : TRIM_H;
+  const prep = (svgStr) => {
+    const clean = svgStr.replace(/<\?xml[^>]*\?>/, '');
+    return bleed ? clean : clean
+      .replace(`width="${BLEED_W}mm" height="${BLEED_H}mm"`, `width="${W}mm" height="${H}mm"`)
+      .replace(`viewBox="0 0 ${BLEED_W} ${BLEED_H}"`, `viewBox="${TRIM} ${TRIM} ${W} ${H}"`);
+  };
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-    @page { size: ${TW}mm ${TH}mm; margin: 0; }
+    @page { size: ${W}mm ${H}mm; margin: 0; }
     html, body { margin: 0; padding: 0; }
-    .face { width: ${TW}mm; height: ${TH}mm; overflow: hidden; break-after: page; }
+    .face { width: ${W}mm; height: ${H}mm; overflow: hidden; break-after: page; }
     .face:last-child { break-after: auto; }
     svg { display: block; }
-  </style></head><body>${faces.map((f) => `<div class="face">${trimmed(f)}</div>`).join('')}</body></html>`;
+  </style></head><body>${faces.map((f) => `<div class="face">${prep(f)}</div>`).join('')}</body></html>`;
 
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -350,7 +356,7 @@ async function reviewPdf(faces, outPath) {
   });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
-  await page.pdf({ path: outPath, width: `${TW}mm`, height: `${TH}mm`,
+  await page.pdf({ path: outPath, width: `${W}mm`, height: `${H}mm`,
                    printBackground: true, preferCSSPageSize: true });
   await browser.close();
 }
@@ -362,11 +368,13 @@ fs.writeFileSync(path.join(OUTPUT_DIR, 'card_front_en.svg'), f.svg);
 fs.writeFileSync(path.join(OUTPUT_DIR, 'card_back_ja.svg'), b.svg);
 await proof(f.svg, path.join(OUTPUT_DIR, 'card_front_en-proof.png'));
 await proof(b.svg, path.join(OUTPUT_DIR, 'card_back_ja-proof.png'));
-await reviewPdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-review.pdf'));
+await makePdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-review.pdf'), { bleed: false });
+await makePdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-print.pdf'),  { bleed: true  });
 
 console.log('=== Osaka meishi ===');
 console.log(`  card_front_en.svg   ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
 console.log(`  card_back_ja.svg    ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
 console.log(`  *-proof.png         trimmed 600dpi proofs`);
-console.log(`  card_meishi-review.pdf  2pp vector, trim size — review only, no bleed`);
+console.log(`  card_meishi-review.pdf   2pp vector, ${TRIM_W}x${TRIM_H}mm trim — review only`);
+console.log(`  card_meishi-print.pdf    2pp vector, ${BLEED_W}x${BLEED_H}mm with ${TRIM}mm bleed — RGB, needs CMYK conversion`);
 console.log(`  QR  v${f.qr.version} ${f.qr.modules}x${f.qr.modules} EC-${QR_EC} · module ${f.qr.module.toFixed(3)}mm · ${QR_URL}`);
