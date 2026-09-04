@@ -47,7 +47,10 @@ const PATENTS = 'U.S. PATENTS PENDING · 63/948,559 · 63/994,876 · 64/011,252 
 // banner into roughly a 1200px container (~0.63 scale), which lands the mono line
 // near 12px and drops it entirely on mobile. The tight variant states the fact and
 // leaves the numbers to the deck cover and footer, where they can be read and checked.
-const PATENTS_SHORT = 'U.S. PATENTS PENDING · 4 FILINGS';
+//
+// This is the compact standard from Brand Guidelines 7.4, which carries neither the
+// numbers nor a count — set here in the banner's caps treatment.
+const PATENTS_SHORT = 'U.S. PATENTS PENDING';
 
 // Shared chrome: orange hairline, fading grid, one oversized faint O on the right.
 function backdrop() {
