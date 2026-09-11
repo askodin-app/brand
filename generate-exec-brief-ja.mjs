@@ -340,6 +340,13 @@ const C = {
   ],
 
   closing: 'ベンチャーキャピタルは、監査されていない最後の資産クラスです。askOdinは、その空白を埋めるインフラを提供します。',
+
+  // PDF document properties — what a reader's title bar, a file manager column
+  // and an email client's preview show. Not rendered on either page.
+  metaTitle:    'askOdin｜未公開市場のためのAI判断インフラ　エグゼクティブ・サマリー',
+  metaAuthor:   'askOdin Pte. Ltd.',
+  metaSubject:  'VC・PE・CVC・金融機関向け。ピッチ資料、財務モデル、デューデリジェンス資料の間にある論理の矛盾を決定論的に監査するAI判断インフラ。',
+  metaKeywords: 'askOdin, AI判断インフラ, AI Judgment Infrastructure, 投資委員会, デューデリジェンス, 決定論的監査, Clarity Score, RUNE, RAVEN, NORN, JUDGE, GSE 2026, 大阪',
   footL: 'askOdin Pte. Ltd.（シンガポール法人）',
   footC: '創業者直通 yeksoon@askodin.app　|　代表窓口 hi@askodin.app',
   footR: 'askodin.app/ja',
@@ -581,9 +588,70 @@ function coverage() {
   console.log(`  glyph coverage: ${seen.size} distinct characters, all present`);
 }
 
-async function makePdf(pages, outPath) {
+/**
+ * PDF document metadata.
+ *
+ * Chrome's page.pdf() takes /Title from document.title, and setContent() leaves
+ * the document untitled — so every PDF this generator wrote said "about:blank"
+ * in the reader's title bar and in the Finder/Explorer column. /Author it does
+ * not expose at all. Both matter here: this file gets forwarded, filed, and
+ * opened by someone who did not receive it from us.
+ *
+ * There is no qpdf/exiftool in this environment, so the Info dictionary is
+ * written as a PDF incremental update: append the new object, a small xref
+ * section covering just it, and a trailer whose /Prev chains to the existing
+ * one. Every byte offset already in the file stays valid, which is the whole
+ * point of doing it this way rather than rewriting the dictionary in place.
+ *
+ * No /CreationDate or /ModDate: a timestamp would make each rebuild differ
+ * from the last, and this repo's rule is that re-running a generator reproduces
+ * its output exactly.
+ */
+function pdfText(str) {
+  // Literal string if it is plain ASCII; UTF-16BE otherwise, which is what the
+  // Japanese title needs to survive a reader's title bar.
+  if (/^[\x20-\x7E]*$/.test(str)) return `(${str.replace(/([\\()])/g, '\\$1')})`;
+  return `<${Buffer.from('\uFEFF' + str, 'utf16le').swap16().toString('hex').toUpperCase()}>`;
+}
+
+function stampPdfMetadata(file, meta) {
+  let orig = fs.readFileSync(file);
+
+  // Chrome stamps wall-clock /CreationDate and /ModDate into its own Info
+  // object, so two rebuilds of an unchanged document differed by six bytes.
+  // That object is unreferenced the moment /Info points at ours; normalising
+  // its timestamps to a fixed value — same string length, so every offset in
+  // the file stays put — makes the build byte-reproducible, which is this
+  // repo's rule for every generator.
+  orig = Buffer.from(
+    orig.toString('latin1').replace(
+      /\/(CreationDate|ModDate)\s*\(D:\d{14}([+-]\d{2}'\d{2}')\)/g,
+      (_, key, tz) => `/${key} (D:20260101000000${tz})`),
+    'latin1');
+  const tail = orig.subarray(-2048).toString('latin1');
+  const prev = /startxref\s+(\d+)\s+%%EOF\s*$/.exec(tail);
+  const trailer = /trailer\s*<<([\s\S]*?)>>\s*startxref/.exec(tail);
+  if (!prev || !trailer) throw new Error(`${file}: no classic xref trailer to chain onto`);
+  const size = Number(/\/Size\s+(\d+)/.exec(trailer[1])[1]);
+  const root = /\/Root\s+(\d+\s+\d+\s+R)/.exec(trailer[1])[1];
+
+  const num = size;                                   // next free object number
+  const body = Object.entries(meta).map(([k, v]) => `  /${k} ${pdfText(v)}`).join('\n');
+  const obj = `${num} 0 obj\n<<\n${body}\n>>\nendobj\n`;
+  const objOff = orig.length;
+  const xrefOff = objOff + Buffer.byteLength(obj, 'latin1');
+  const xref =
+    `xref\n0 1\n0000000000 65535 f \n` +
+    `${num} 1\n${String(objOff).padStart(10, '0')} 00000 n \n` +
+    `trailer\n<< /Size ${num + 1} /Root ${root} /Info ${num} 0 R /Prev ${prev[1]} >>\n` +
+    `startxref\n${xrefOff}\n%%EOF\n`;
+
+  fs.writeFileSync(file, Buffer.concat([orig, Buffer.from(obj, 'latin1'), Buffer.from(xref, 'latin1')]));
+}
+
+async function makePdf(pages, outPath, docTitle) {
   const { default: puppeteer } = await import('puppeteer');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${docTitle}</title><style>
     @page { size: ${PAGE_W}mm ${PAGE_H}mm; margin: 0; }
     html, body { margin: 0; padding: 0; }
     .pg { width: ${PAGE_W}mm; height: ${PAGE_H}mm; overflow: hidden; break-after: page; }
@@ -625,7 +693,14 @@ for (const T of Object.values(THEMES)) {
   fs.writeFileSync(at('-p2.svg'), p2);
   await proof(p1, at('-p1-proof.png'));
   await proof(p2, at('-p2-proof.png'));
-  await makePdf([p1, p2], pdfAt);
+  await makePdf([p1, p2], pdfAt, C.metaTitle);
+  stampPdfMetadata(pdfAt, {
+    Title: C.metaTitle,
+    Author: C.metaAuthor,
+    Subject: C.metaSubject,
+    Keywords: C.metaKeywords,
+    Creator: 'generate-exec-brief-ja.mjs — askOdin brand asset pipeline',
+  });
   console.log(`  ${T.key.padEnd(5)} → askOdin-exec-brief-ja-${T.use}.pdf  + 2 SVG + 2 proof PNG`);
 }
 console.log(`\n  ${OUTPUT_DIR}/`);
