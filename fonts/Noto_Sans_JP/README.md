@@ -1,7 +1,8 @@
 # Noto Sans JP — vendored subset
 
-Japanese face for the meishi (`generate-meishi.mjs`). Latin stays IBM Plex Sans;
-Noto sets kana, kanji, CJK punctuation and fullwidth forms.
+Japanese face for the meishi (`generate-meishi.mjs`) and the Osaka executive
+brief (`generate-exec-brief-ja.mjs`). Latin stays IBM Plex Sans; Noto sets kana,
+kanji, CJK punctuation and fullwidth forms.
 
 **Provenance.** Instantiated from the upstream Google Fonts variable font
 `NotoSansJP[wght].ttf` (googlefonts/noto-cjk), SIL Open Font License 1.1.
@@ -9,7 +10,7 @@ Noto sets kana, kanji, CJK punctuation and fullwidth forms.
 **Why these files and not the upstream ones.** opentype.js — which outlines every
 glyph on the card to a `<path>` — cannot read variable fonts or `.ttc` collections,
 and three full static weights would put ~17 MB of binary in the repo. Each weight
-here is instantiated at a fixed `wght` and subset to 455 characters: ASCII, all
+here is instantiated at a fixed `wght` and subset to 721 characters: ASCII, all
 hiragana and katakana, fullwidth forms, CJK punctuation, and the kanji used in
 askOdin Japanese collateral.
 
@@ -23,3 +24,12 @@ askOdin Japanese collateral.
 glyph will be missing. Add the character to `KANJI` in `tools/prepare-noto-sans-jp.py`
 and re-run it (needs `fontTools` and network); commit the regenerated files. The
 build itself needs neither the script nor the network.
+
+`generate-meishi.mjs` fails with the offending character rather than letting it
+through — outlined text has no system-font fallback, so a missing kanji would
+otherwise reach the printer as a tofu box. DK's card added 共同最高収益 this way.
+
+`generate-exec-brief-ja.mjs` checks the whole document up front instead, and
+prints the entire delta in the form `KANJI` wants. That is what a two-page
+document needs: it introduced 260 characters, and failing on the first one would
+have meant 260 font rebuilds.

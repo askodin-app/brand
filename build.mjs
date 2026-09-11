@@ -50,6 +50,7 @@ const STAGES = {
     ['generate-faking-judgment-cards.mjs',    'social/20260901-faking-judgment-is-easy/'],
     ['generate-substack-investor-views.mjs',  'social/20260903-what-358672-investor-views-taught-me-about-pitch-decks/'],
     ['generate-information-is-free.mjs',      'social/20260909-information-is-free-judgment-is-unscalable/'],
+    ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
     ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
   ],
   // Reads src/askOdin-Brand-Guidelines.html through headless Chrome.
