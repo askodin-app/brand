@@ -28,6 +28,17 @@ WEIGHTS = {400: "Regular", 500: "Medium", 700: "Bold"}
 KANJI = (
     "創業者兼代表取締役陸奕順資本配分判断米国特許出願中件所在地法人株式会社東京大阪営責任担当部長共同最高収益"
     "参画仮事考方沿設計未公開市場説得力適化物理則基概要料財務間論矛盾決定的監査盤毎回指摘項内根拠箇遡投委員前明可能性検証他野標準自身認報告日令規制枠組情横防衛線機関家向破綻対象金融総合商突数値食違提歪以完了付記録急直調達控学発研究型面談致命点洗修正無試英語核構造済依存係現巧除上主張切脆採複文書三角照示黙整時系列並評価乖離確率実行知遮扱結果固再客様類習使抽外有用原保持期限動執仕装供予派生超省経産第版度審込既変更意思段置入観体年築携買初太平洋域技術門統括賞受個別相承過去案進週貴月之島火水木梅田後空白埋通窓口導策形態償削望応"
+    # Third block: the OPPO Pad lock screen (generate-oppo-lockscreen.mjs).
+    # 「判断」は、最後に残されたスケールしない資産。 — 残 was the only character
+    # in that headline outside the existing set.
+    "残"
+    # Fourth block: The Judgment Stack EP 01 note.com eyecatch
+    # (generate-podcast-ep01-note-ja.mjs). VC投資を直感から構造工学へ /
+    # 1.25兆ドルの判断ボトルネックを解く決定論的AI.
+    "感工兆解"
+    # Fifth block: "How Theranos Would Have Scored" note.com eyecatch
+    # (generate-theranos-note-ja.mjs). 投資家は愚かではなかった。 / 物理法則違反.
+    "愚反"
 )
 
 def charset() -> str:

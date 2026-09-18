@@ -50,6 +50,8 @@ const STAGES = {
     ['generate-faking-judgment-cards.mjs',    'social/20260901-faking-judgment-is-easy/'],
     ['generate-substack-investor-views.mjs',  'social/20260903-what-358672-investor-views-taught-me-about-pitch-decks/'],
     ['generate-information-is-free.mjs',      'social/20260909-information-is-free-judgment-is-unscalable/'],
+    ['generate-how-theranos-would-have-scored.mjs', 'social/20260918-how-theranos-would-have-scored/ — banners + data cards'],
+    ['generate-theranos-note-ja.mjs',         'social/20260918-theranos-note-ja/ — note.com eyecatch'],
     ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
     ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
   ],
