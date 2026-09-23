@@ -39,6 +39,16 @@ KANJI = (
     # Fifth block: "How Theranos Would Have Scored" note.com eyecatch
     # (generate-theranos-note-ja.mjs). 投資家は愚かではなかった。 / 物理法則違反.
     "愚反"
+    # Sixth block: note × Google Gemini campaign article
+    # (generate-gemini-note-ja.mjs) — eyecatch, pipeline figure, benchmark card.
+    "見際非忠元番号位否単備央満下帯一"
+    # Seventh block: note.com お仕事依頼 header (generate-note-inquiry.mjs).
+    # 実証実験（PoC）・共同検証のご案内.
+    "験"
+    # Eighth block: note.com table figures for "Judgment Infrastructure vs.
+    # Explainable AI" (generate-xai-note-ja.mjs) — note has no tables, so the
+    # comparison and the three generations ship as images.
+    "比較目質問成推移測独立徴量重引換約信紐手読作署名失敗停止世速流暢界視真字捏"
 )
 
 def charset() -> str:

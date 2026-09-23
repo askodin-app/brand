@@ -52,6 +52,8 @@ const STAGES = {
     ['generate-information-is-free.mjs',      'social/20260909-information-is-free-judgment-is-unscalable/'],
     ['generate-how-theranos-would-have-scored.mjs', 'social/20260918-how-theranos-would-have-scored/ — banners + data cards'],
     ['generate-theranos-note-ja.mjs',         'social/20260918-theranos-note-ja/ — note.com eyecatch'],
+    ['generate-judgment-infrastructure-vs-xai.mjs', 'social/20260922-judgment-infrastructure-vs-xai/ — banners + cards'],
+    ['generate-xai-note-ja.mjs',              'social/20260922-judgment-infrastructure-vs-xai-note-ja/ — note.com eyecatch + table figures'],
     ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
     ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
   ],
