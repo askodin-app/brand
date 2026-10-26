@@ -59,6 +59,8 @@ const STAGES = {
     ['generate-gemini-note-ja.mjs',           'social/20260918-gemini-last-mile-note-ja/ — note × Gemini campaign eyecatch + figures'],
     ['generate-judgment-infrastructure-vs-xai.mjs', 'social/20260922-judgment-infrastructure-vs-xai/ — banners + cards'],
     ['generate-xai-note-ja.mjs',              'social/20260922-judgment-infrastructure-vs-xai-note-ja/ — note.com eyecatch + table figures'],
+    ['generate-what-lps-should-ask-their-gps-about-ai-diligence.mjs', 'social/20260928-what-lps-should-ask-their-gps-about-ai-diligence/ — banners, cards, LinkedIn carousel PDF'],
+    ['generate-what-lps-should-ask-note-ja.mjs', 'social/20260929-what-lps-should-ask-their-gps-about-ai-diligence-note-ja/ — note.com eyecatch + checklist'],
     ['generate-osaka-gse2026-note-ja.mjs',    'social/20261003-osaka-gse2026-note-ja/ — note.com eyecatch + invitation card'],
     ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
     ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
