@@ -223,6 +223,70 @@ function eyecatchSvg() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Audio cover — square, for note's audio embed
+//
+// note's help centre recommends a 1:1 cover for embedded audio (10MB max, jpg
+// or png); the retired audio post type asked for 1000x1000 or larger. 1400 is
+// drawn, matching the podcast show art. It is shown small beside a player, so
+// it carries only the wordmark, the title and the score — the eyecatch's
+// argument column would be unreadable at that size.
+// ─────────────────────────────────────────────────────────────────────────────
+const AS = 1400;
+
+function audioCoverSvg() {
+  const S = AS;
+  const cx = S / 2;
+  const el = [`<rect width="${S}" height="${S}" fill="${DARK}"/>`];
+  el.push(`<defs><linearGradient id="gridFadeSq" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${WHITE}" stop-opacity="0.05"/>
+    <stop offset="55%" stop-color="${WHITE}" stop-opacity="0.022"/>
+    <stop offset="100%" stop-color="${WHITE}" stop-opacity="0"/>
+  </linearGradient></defs>`);
+  for (let x = 0; x <= S; x += 70) el.push(`<line x1="${x}" y1="0" x2="${x}" y2="${S}" stroke="url(#gridFadeSq)" stroke-width="1"/>`);
+  for (let y = 70; y < S; y += 70) el.push(`<line x1="0" y1="${y}" x2="${S}" y2="${y}" stroke="url(#gridFadeSq)" stroke-width="1"/>`);
+  el.push(`<path d="${F.semi.getPath('O', -160, S / 2 + 420, 1400).toPathData(2)}" fill="${GREEN}" opacity="0.05"/>`);
+  el.push(`<rect width="${S}" height="10" fill="${ORANGE}"/>`);
+
+  const centreRun = (t, y, size, opts) => run(t, cx - widthOf(t, size, opts.font, opts.jpFont) / 2, y, size, opts);
+
+  const wm = 64;
+  const askW = latinW(F.semi, 'ask', wm);
+  const wx = cx - (askW + latinW(F.semi, 'Odin', wm)) / 2;
+  el.push(latin(F.semi, 'ask', wx, 190, wm, ORANGE), latin(F.semi, 'Odin', wx + askW, 190, wm, GREEN));
+
+  // Title: the eyecatch's two lines, set as large as the measure allows.
+  const measure = S - 220;
+  const hOpts = jp('bold');
+  const hSize = Math.min(84, ...HEAD.map((l) => measure / widthOf(l, 1, hOpts.font, hOpts.jpFont)));
+  HEAD.forEach((line, i) => el.push(centreRun(line, 370 + i * hSize * 1.34, hSize, { ...hOpts, fill: WHITE })));
+
+  // The score.
+  const n = 440;
+  const d = n * 0.24;
+  const nW = latinW(F.light, '0', n);
+  const sx = cx - (nW + n * 0.05 + latinW(F.light, '/100', d)) / 2;
+  el.push(...midT(F.monoMed, 'CLARITY SCORE', cx, 640, 28, 7, WHITE, 0.55));
+  el.push(latin(F.light, '0', sx, 1010, n, ORANGE), latin(F.light, '/100', sx + nW + n * 0.05, 1010, d, WHITE, 0.42));
+
+  const tag = 'KILL SHOT';
+  const tw = trackedW(F.monoMed, tag, 30, 6);
+  const tx = cx - (20 + 22 + tw) / 2;
+  el.push(`<rect x="${tx}" y="${1100 - 23}" width="20" height="20" fill="${KILL}"/>`);
+  el.push(...tracked(F.monoMed, tag, tx + 42, 1100, 30, 6, WHITE, 0.85));
+
+  el.push(`<rect x="${cx - 50}" y="1162" width="100" height="4" fill="${ORANGE}"/>`);
+  const dOpts = jp('medium');
+  el.push(centreRun(DECK[0], 1238, 40, { ...dOpts, fill: WHITE, opacity: 0.85 }));
+  el.push(...midT(F.mono, 'ASKODIN.APP/JA · SYNTHETIC · ALL FICTIONAL', cx, 1320, 20, 5, WHITE, 0.4));
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
+  <title>askOdin — note.com audio cover — The Halvard Dilemma (JA)</title>
+  ${el.join('\n  ')}
+</svg>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // In-article figures — note.com has no table block
 //
 // 1280 wide, body at 32px, so a phone showing the image at ~360px still renders
@@ -440,6 +504,15 @@ async function main() {
     const file = path.join(PNG_DIR, `${name}${suffix}.png`);
     await sharp(buf, { density: 300 }).resize(w, h, { fit: 'fill' }).png().toFile(file);
     console.log(`  ${path.basename(file).padEnd(40)} ${w}x${h}  ${(fs.statSync(file).size / 1024).toFixed(0)}KB`);
+  }
+
+  const audio = 'askOdin-halvard-note-ja-audio';
+  fs.writeFileSync(path.join(SVG_DIR, `${audio}.svg`), audioCoverSvg());
+  const abuf = fs.readFileSync(path.join(SVG_DIR, `${audio}.svg`));
+  for (const [w, suffix] of [[AS, ''], [AS * 2, '-2x']]) {
+    const file = path.join(PNG_DIR, `${audio}${suffix}.png`);
+    await sharp(abuf, { density: 300 }).resize(w, w, { fit: 'fill' }).png().toFile(file);
+    console.log(`  ${path.basename(file).padEnd(40)} ${w}x${w}  ${(fs.statSync(file).size / 1024).toFixed(0)}KB`);
   }
 
   console.log('\ncards/  (in-article tables; note.com has no table block)');
