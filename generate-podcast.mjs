@@ -190,25 +190,36 @@ function stack(cx, y, w, barH, gap) {
 // allows Light at 40px+ display scale, and the Substack masthead uses it — but
 // Spotify renders show art at 55px in a feed, where Light strokes disappear.
 // SemiBold by default; `weight: 'light'` renders the Substack-faithful variant.
+//
+// The wordmark sits beneath the title as a signature, so the art reads top to
+// bottom as "The Judgment Stack — askOdin". It is sized to survive the feed
+// thumbnail; a masthead-sized wordmark above the title vanished at 55px.
 function coverSvg(S, { weight = 'semi' } = {}) {
   const k = S / 3000;
   const cx = S / 2;
   const font = weight === 'light' ? FONT_LIGHT : FONT_SEMI;
   const el = backdrop(S, S, { rule: 15 * k, oScale: 1.15 });
 
-  el.push(...wordmark(cx, 430 * k, 90 * k));
-
   // Three lines, all set to the size that fits the longest word in the measure.
   const lines = ['The', 'Judgment', 'Stack'];
   const measure = S * 0.76;
   const size = Math.min(...lines.map((l) => sizeToFit(font, l, measure)));
   const lh = size * 1.11;
-  const firstBaseline = 1050 * k;
+
+  const wmSize = sizeToFit(FONT_SEMI, 'askOdin', S * 0.46);
+  const gap = 330 * k;
+
+  // Centre the title + signature block on real ascender heights, nudged up a
+  // touch so it sits optically centred rather than sagging.
+  const ascent = (f, s) => f.charToGlyph('h').getMetrics().yMax * (s / f.unitsPerEm);
+  const blockH = ascent(font, size) + 2 * lh + gap + ascent(FONT_SEMI, wmSize);
+  const firstBaseline = (S - blockH) / 2 - 40 * k + ascent(font, size);
   lines.forEach((l, i) => el.push(centered(font, l, cx, firstBaseline + i * lh, size, WHITE, 0.96)));
 
-  const dividerY = firstBaseline + 2 * lh + 200 * k;
+  const titleBottom = firstBaseline + 2 * lh;
+  const dividerY = titleBottom + gap * 0.42;
   el.push(`<line x1="${cx - 130 * k}" y1="${dividerY}" x2="${cx + 130 * k}" y2="${dividerY}" stroke="${ORANGE}" stroke-width="${9 * k}"/>`);
-  el.push(...stack(cx, dividerY + 130 * k, S * 0.62, 84 * k, 24 * k));
+  el.push(...wordmark(cx, titleBottom + gap + ascent(FONT_SEMI, wmSize), wmSize));
   return svgFor(`${SHOW} — askOdin`, el, S, S);
 }
 
