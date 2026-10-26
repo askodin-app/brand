@@ -1688,8 +1688,8 @@
 
     <hr>
 
-    <h3 style="color: var(--white);">7.3 LinkedIn Banner</h3>
-    <p style="color: #999;">The LinkedIn cover banner (1584 &times; 396px) uses a right-aligned layout to avoid profile photo overlap on the left.</p>
+    <h3 style="color: var(--white);">7.3 LinkedIn Cover</h3>
+    <p style="color: #999;">The LinkedIn cover (1584 &times; 396px) is a five-slide Premium rotation. Slide 1 is the only one shown in the homepage card, where the whole canvas shrinks to about 225px wide, so it carries just the wordmark and category at sizes that survive that scale. Slides 2&ndash;5 are read on the profile and hold one idea each. All five share the same frame so only the text block changes as they rotate.</p>
 
     <table>
       <tr>
@@ -1697,32 +1697,40 @@
         <th>Spec</th>
       </tr>
       <tr>
-        <td style="color: #ccc;">Background</td>
-        <td style="color: #999;">Deep Dark (#111119) with orange accent bar (4px top)</td>
-      </tr>
-      <tr>
-        <td style="color: #ccc;">Logo</td>
-        <td style="color: #999;">askOdin wordmark, 62px, right-aligned — "ask" in askOdin Orange, "Odin" in askOdin Green</td>
-      </tr>
-      <tr>
-        <td style="color: #ccc;">Tagline</td>
-        <td style="color: #999;">IBM Plex Sans Light, 30px, white — "The Last Mile of AI Isn't Information. It's Judgment."</td>
-      </tr>
-      <tr>
-        <td style="color: #ccc;">Separator</td>
-        <td style="color: #999;">askOdin Orange line, 80px wide, 2.5px stroke</td>
-      </tr>
-      <tr>
-        <td style="color: #ccc;">Patent line</td>
-        <td style="color: #999;">IBM Plex Mono, 20px, white at 70% opacity — "U.S. Patents Pending: 63/948,559 &middot; 63/994,876 &middot; 64/011,252 &middot; 64/017,488"</td>
-      </tr>
-      <tr>
-        <td style="color: #ccc;">CTA button</td>
-        <td style="color: #999;">askOdin Green solid pill (5px radius), white text, IBM Plex Sans Medium, 22px — "askodin.app"</td>
+        <td style="color: #ccc;">Frame</td>
+        <td style="color: #999;">Deep Dark (#111119), 6px askOdin Orange top bar, 2px Dark Card (#1E293B) rule at x = 480</td>
       </tr>
       <tr>
         <td style="color: #ccc;">Safe zone</td>
-        <td style="color: #999;">Keep important content to x &gt; 450px (profile photo overlaps bottom-left ~420px on desktop)</td>
+        <td style="color: #999;">x 0&ndash;460 left empty for the avatar; content right-aligned to x = 1416 (168px buffer for mobile edge cropping)</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Slide 1 &mdash; Category</td>
+        <td style="color: #999;">Wordmark 150px SemiBold; &ldquo;AI Judgment Infrastructure&trade;&rdquo; 64px SemiBold white; comprehensive patent line (7.4) in Plex Mono, Muted Text</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Slide 2 &mdash; Hook</td>
+        <td style="color: #999;">&ldquo;Hope is not an asset class. / Audit the reasoning before you write the check.&rdquo; &middot; askodin.app</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Slide 3 &mdash; Conflict</td>
+        <td style="color: #999;">&ldquo;LLMs optimize for persuasion. / askOdin compiles for physics.&rdquo; &mdash; &ldquo;Pitch decks cross-examined against the spreadsheet, before the IC.&rdquo;</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Slide 4 &mdash; Clarity</td>
+        <td style="color: #999;">&ldquo;askOdin Clarity&rdquo; 88px (Clarity in green), &ldquo;Audits deal memos against the models behind them&rdquo;, audience tags VC &middot; PE &middot; Family offices &middot; LPs. No &trade; on product names; no QoE or CIM-reconciliation claims</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Slide 5 &mdash; Patents</td>
+        <td style="color: #999;">&ldquo;Proprietary Verification Architecture&rdquo;, compact patent line (7.4), then the four protocols with buyer-facing descriptions and application numbers</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Register</td>
+        <td style="color: #999;">Slides 2&ndash;5 use the allocator&rsquo;s vocabulary (deal memo, IC, pitch deck, spreadsheet), not the engine&rsquo;s (compiler, probabilistic, semantic drift)</td>
+      </tr>
+      <tr>
+        <td style="color: #ccc;">Minimum size</td>
+        <td style="color: #999;">Slide 1 text meant for the homepage card: 64px. Slide 2&ndash;5 headlines: 56px (about 14px on a phone)</td>
       </tr>
     </table>
 

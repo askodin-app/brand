@@ -69,7 +69,7 @@ than in Guidelines §8.1.
 | DocSend / data-room banners | `output/decks/` | 9 | `generate-docsend-banner.mjs` |
 | Crucible product proof | `output/crucible/` | 6 | `generate-crucible-proof.mjs` |
 | Podcast show identity | `output/podcast/` | 9 | `generate-podcast.mjs` |
-| Profile furniture (X, YouTube, Zoom) | `output/profile/` | 19 | `generate-twitter-cover.mjs`, `generate-twitter-cover-centered.mjs`, `generate-youtube-cover.mjs`, `generate-virtual-bg.mjs`, `generate-virtual-bg-bright.mjs`, `generate-linkedin-banner.mjs` |
+| Profile furniture (X, YouTube, Zoom, LinkedIn 5-slide cover) | `output/profile/` | 31 | `generate-twitter-cover.mjs`, `generate-twitter-cover-centered.mjs`, `generate-youtube-cover.mjs`, `generate-virtual-bg.mjs`, `generate-virtual-bg-bright.mjs`, `generate-linkedin-banner.mjs` |
 
 The LinkedIn banner and social profile marks in `output/profile/` are the exception
 that is indexed in **both** places: they are core identity furniture (Guidelines §8.1)
