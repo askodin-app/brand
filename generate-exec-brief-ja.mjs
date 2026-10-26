@@ -215,7 +215,7 @@ const C = {
   barLeft:  'askOdin Pte. Ltd.（シンガポール法人）　|　ソニー Boundary Spanning Service 参画',
   // 「仮」 is load-bearing: these are provisionals, and a patent-literate
   // General Counsel reads 特許出願中 as a non-provisional filing.
-  barRight: '米国仮特許出願 4件　·　IPOS §34 クリア　·　AI事業者ガイドラインの考え方に沿った設計',
+  barRight: '米国仮特許出願 4件　·　AI事業者ガイドラインの考え方に沿った設計',
   barLeft2: 'askOdin Pte. Ltd.　|　ガバナンス・導入モデル・経営体制',
 
   h1a: '未公開市場のための',
