@@ -1,8 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Osaka meishi — the bilingual executive card.
+// Osaka meishi — the bilingual executive cards.
 //
-//   front  card_front_en.svg   Hardened Dark, English/global face
-//   back   card_back_ja.svg    Institutional White, Japanese executive face
+//   front  Hardened Dark, English/global face
+//   back   Institutional White, Japanese executive face
+//
+// One card per entry in PEOPLE below. The layout grid is shared: two executives
+// handing cards across the same table should have their name, title and contact
+// block land on the same baselines. Only the copy, the QR target and the shape
+// of the name block change — see PEOPLE.
 //
 // Everything is drawn in millimetres: the SVG is `width="95mm" viewBox="0 0 95 59"`
 // so one user unit is one millimetre and a printer's ruler agrees with the source.
@@ -12,7 +17,7 @@
 // and nothing can substitute Yu Gothic for Noto behind our backs.
 //
 // The QR is regenerated from the decoded URL rather than traced from the LinkedIn
-// screenshot — see QR_URL below.
+// screenshot — see qrUrl in PEOPLE below.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import opentype from 'opentype.js';
@@ -51,17 +56,73 @@ const y = (offset) => SAFE_T + offset;
 const PT = 25.4 / 72;                      // 1pt in mm
 const pt = (n) => n * PT;
 
+// ── The card holders ─────────────────────────────────────────────────────────
+// `out` is the filename prefix. The CEO's card is the unprefixed original and
+// stays that way: PRINT-MEISHI.md and anything already sent to a printer point
+// at card_front_en.svg, and renaming it to match a scheme would rot those links
+// for no gain.
+//
+// `hero` is the one genuinely variable part of the layout. A Japanese executive
+// name sets as kanji with the romanisation underneath it; a name that has no
+// kanji form sets the Latin itself as the hero and drops the second line. Both
+// hang off the same baseline grid — see back().
+const PEOPLE = [
+  {
+    out: 'card_',
+    qrUrl: 'https://www.linkedin.com/in/yeksoon',
+    en: {
+      name: 'LOK Yek Soon',
+      title: 'Founder & CEO',
+      contact: ['+65 9684 2308', 'yeksoon@askodin.app', 'askodin.app · Singapore'],
+    },
+    ja: {
+      title: '創業者 兼 代表取締役CEO',
+      kana:  'ロック・イェック・スーン',
+      hero:  { text: '陸 奕 順', size: 13, tracking: 0.15, jp: true, baseline: 25.5 },
+      sub:   'LOK Yek Soon',
+      contact: ['+65 9684 2308', 'yeksoon@askodin.app', 'askodin.app · 所在地: シンガポール'],
+    },
+  },
+  {
+    // DK asked for no mobile number on either face. The contact block is
+    // bottom-aligned, so dropping the line simply starts it one line lower.
+    out: 'card_dk_',
+    qrUrl: 'https://www.linkedin.com/in/dhirajwohra',
+    en: {
+      name: 'Dhiraj Wohra (DK)',
+      title: 'Founding CRO',
+      contact: ['dk@askodin.app', 'askodin.app · Singapore'],
+    },
+    ja: {
+      title: '共同創業者 兼 最高収益責任者（CRO）',
+      kana:  'ディラジ・ウォーラ',
+      // No kanji form, so the Latin name is the hero. 14pt Bold against the
+      // CEO card's 13pt kanji sets the same optical weight, and the baseline
+      // drops 1mm to sit in the space the romanisation line would have used.
+      hero:  { text: 'Dhiraj Wohra (DK)', size: 14, tracking: 0, jp: false, baseline: 26.5 },
+      sub:   null,
+      contact: ['dk@askodin.app', 'askodin.app · 所在地: シンガポール'],
+    },
+  },
+];
+
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const F = {
   light:    opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Light.ttf'),
   regular:  opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Regular.ttf'),
   medium:   opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Medium.ttf'),
   semibold: opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-SemiBold.ttf'),
+  bold:     opentype.loadSync('./fonts/IBM_Plex_Sans/static/IBMPlexSans-Bold.ttf'),
   mono:     opentype.loadSync('./fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf'),
   jp:       opentype.loadSync('./fonts/Noto_Sans_JP/NotoSansJP-Regular.ttf'),
   jpMedium: opentype.loadSync('./fonts/Noto_Sans_JP/NotoSansJP-Medium.ttf'),
   jpBold:   opentype.loadSync('./fonts/Noto_Sans_JP/NotoSansJP-Bold.ttf'),
 };
+
+// Which key in F a face came from, for error messages. The instanced Noto
+// statics all still carry the variable font's default family name
+// ("Noto Sans JP Thin"), so the embedded name cannot say which file to fix.
+const FACE_NAME = new Map(Object.entries(F).map(([k, f]) => [f, k]));
 
 // Kana, kanji, CJK punctuation and fullwidth forms come from Noto; everything
 // else from Plex. Setting a Latin face against a Japanese one is the normal
@@ -73,6 +134,28 @@ const isJP = (ch) => {
          (c >= 0xff00 && c <= 0xffef);     // fullwidth forms
 };
 
+
+/**
+ * Pick the face for a character — and refuse to set one the face does not have.
+ *
+ * Every glyph here is outlined to a <path>, so a missing character cannot fall
+ * back to a system font the way live text would. opentype.js returns .notdef,
+ * which draws as a tofu box, and the build succeeds. The vendored Noto files are
+ * a 461-character subset (fonts/Noto_Sans_JP/README.md), so any new Japanese
+ * copy is one kanji away from that — DK's 共同 / 最高収益 already was. Fail loudly.
+ */
+function faceFor(ch, font, jpFont) {
+  const f = jpFont && isJP(ch) ? jpFont : font;
+  if (f.charToGlyphIndex(ch) === 0) {
+    const cp = ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
+    throw new Error(
+      `No glyph for "${ch}" (U+${cp}) in face F.${FACE_NAME.get(f) ?? '?'}. ` +
+      `If it is a kanji or kana, add it to KANJI in tools/prepare-noto-sans-jp.py, ` +
+      `re-run that script, and commit the regenerated fonts.`);
+  }
+  return f;
+}
+
 /**
  * Outline a string, optionally setting Latin runs in a different face.
  * `tracking` is in em, matching the CSS letter-spacing the spec quotes.
@@ -81,7 +164,7 @@ function text(str, x, y, sizeMm, { font, jpFont = null, fill, tracking = 0 }) {
   const parts = [];
   let cursor = x;
   for (const ch of str) {
-    const f = jpFont && isJP(ch) ? jpFont : font;
+    const f = faceFor(ch, font, jpFont);
     const scale = sizeMm / f.unitsPerEm;
     if (ch !== ' ' || true) {
       const d = f.getPath(ch, cursor, y, sizeMm).toPathData(3);
@@ -98,7 +181,7 @@ function text(str, x, y, sizeMm, { font, jpFont = null, fill, tracking = 0 }) {
 function widthOf(str, sizeMm, { font, jpFont = null, tracking = 0 }) {
   let w = 0;
   for (const ch of str) {
-    const f = jpFont && isJP(ch) ? jpFont : font;
+    const f = faceFor(ch, font, jpFont);
     w += f.charToGlyph(ch).advanceWidth * (sizeMm / f.unitsPerEm) + tracking * sizeMm;
   }
   return w - tracking * sizeMm;
@@ -108,7 +191,7 @@ function widthOf(str, sizeMm, { font, jpFont = null, tracking = 0 }) {
 function descent(str, sizeMm, { font, jpFont = null }) {
   let d = 0;
   for (const ch of str) {
-    const f = jpFont && isJP(ch) ? jpFont : font;
+    const f = faceFor(ch, font, jpFont);
     d = Math.max(d, f.getPath(ch, 0, 0, sizeMm).getBoundingBox().y2);
   }
   return d;
@@ -162,17 +245,17 @@ function logomark(x, y, size) {
  */
 function lsb(str, sizeMm, { font, jpFont = null }) {
   const ch = [...str][0];
-  const f = jpFont && isJP(ch) ? jpFont : font;
+  const f = faceFor(ch, font, jpFont);
   return f.getPath(ch, 0, 0, sizeMm).getBoundingBox().x1;
 }
 
 // ── QR ───────────────────────────────────────────────────────────────────────
-// Decoded from the founder's LinkedIn profile QR (v4, EC M, "?fromQR=1" tracking
-// parameter stripped). Dropping the parameter shortens the payload enough to
-// fall from 33x33 to 29x29, which buys a 14% larger module — the difference
-// between a marginal and a comfortable scan at 13mm in a dim meeting room.
-const QR_URL = 'https://www.linkedin.com/in/yeksoon';
-const QR_EC  = 'M';
+// Each qrUrl below is decoded from that person's own LinkedIn profile QR, with
+// LinkedIn's "?fromQR=1" tracking parameter stripped. Dropping the parameter
+// shortens the payload enough to fall from 33x33 to 29x29, which buys a 14%
+// larger module — the difference between a marginal and a comfortable scan at
+// 13mm in a dim meeting room. Both cards land on 29x29 / 0.345mm modules.
+const QR_EC = 'M';
 
 /**
  * Horizontal runs are merged into one path. Adjacent <rect>s can leave hairline
@@ -203,7 +286,7 @@ function qrPath(url, ec, originX, originY, dataSize) {
 // ─────────────────────────────────────────────────────────────────────────────
 // FACE 1 — card_front_en.svg
 // ─────────────────────────────────────────────────────────────────────────────
-function front() {
+function front(p) {
   const el = [];
 
   el.push(`<rect x="0" y="0" width="${BLEED_W}" height="${BLEED_H}" fill="${DARK}"/>`);
@@ -217,8 +300,8 @@ function front() {
   el.push(mark.svg);
 
   // Executive identity
-  el.push(text('LOK Yek Soon',    SAFE_L, y(16.6), pt(11), { font: F.semibold, fill: WHITE }).svg);
-  el.push(text('Founder & CEO',   SAFE_L, y(21.4), pt(8),  { font: F.regular,  fill: MUTED }).svg);
+  el.push(text(p.en.name,         SAFE_L, y(16.6), pt(11), { font: F.semibold, fill: WHITE }).svg);
+  el.push(text(p.en.title,        SAFE_L, y(21.4), pt(8),  { font: F.regular,  fill: MUTED }).svg);
   el.push(text('askOdin Pte Ltd', SAFE_L, y(25.4), pt(8),  { font: F.regular,  fill: MUTED }).svg);
 
   // Positioning and defensibility
@@ -228,7 +311,7 @@ function front() {
   // QR, bottom-right, inside the safe box
   const QR_BOX = 13.0, QUIET = 1.5;
   const boxX = SAFE_R - QR_BOX, boxY = SAFE_B - QR_BOX;
-  const q = qrPath(QR_URL, QR_EC, boxX + QUIET, boxY + QUIET, QR_BOX - QUIET * 2);
+  const q = qrPath(p.qrUrl, QR_EC, boxX + QUIET, boxY + QUIET, QR_BOX - QUIET * 2);
   el.push(`<rect x="${boxX}" y="${boxY}" width="${QR_BOX}" height="${QR_BOX}" rx="0.5" fill="${WHITE}"/>`);
   el.push(q.path);
 
@@ -236,20 +319,20 @@ function front() {
   // its descender rather than its baseline, so the 'p' of .app stays inside the
   // safe box and the two still read flush.
   const lh = pt(6.5) * 1.4;
-  const lines = ['+65 9684 2308', 'yeksoon@askodin.app', 'askodin.app · Singapore'];
+  const lines = p.en.contact;
   const lastBase = SAFE_B - descent(lines[lines.length - 1], pt(6.5), { font: F.regular });
   lines.forEach((line, i) => {
     const y = lastBase - (lines.length - 1 - i) * lh;
     el.push(text(line, SAFE_L, y, pt(6.5), { font: F.regular, fill: WHITE }).svg);
   });
 
-  return { svg: svg('askOdin Meishi — Front (EN)', el), qr: q };
+  return { svg: svg(`askOdin Meishi — Front (EN) — ${p.en.name}`, el), qr: q };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FACE 2 — card_back_ja.svg
 // ─────────────────────────────────────────────────────────────────────────────
-function back() {
+function back(p) {
   const el = [];
   el.push(`<rect x="0" y="0" width="${BLEED_W}" height="${BLEED_H}" fill="${WHITE}"/>`);
 
@@ -260,14 +343,18 @@ function back() {
   el.push(text('アスクオーディン（シンガポール法人）',
     SAFE_L, y(8), pt(6.5), { ...jp, fill: MUTED }).svg);
 
-  // Executive identity
-  el.push(text('創業者 兼 代表取締役CEO',
+  // Executive identity. The kana line is the reading guide for the hero below
+  // it, whether the hero is kanji or Latin.
+  el.push(text(p.ja.title,
     SAFE_L, y(14.5), pt(7.5), { font: F.medium, jpFont: F.jpMedium, fill: GREEN }).svg);
-  el.push(text('ロック・イェック・スーン',
+  el.push(text(p.ja.kana,
     SAFE_L, y(18.4), pt(5.5), { ...jp, fill: MUTED, tracking: 0.05 }).svg);
-  el.push(text('陸 奕 順',
-    SAFE_L, y(25.5), pt(13), { font: F.jpBold, jpFont: F.jpBold, fill: DARK, tracking: 0.15 }).svg);
-  el.push(text('LOK Yek Soon', SAFE_L, y(29.8), pt(7), { font: F.regular, fill: MUTED }).svg);
+
+  const h = p.ja.hero;
+  const heroFont = h.jp ? F.jpBold : F.bold;
+  el.push(text(h.text, SAFE_L, y(h.baseline), pt(h.size),
+    { font: heroFont, jpFont: F.jpBold, fill: DARK, tracking: h.tracking }).svg);
+  if (p.ja.sub) el.push(text(p.ja.sub, SAFE_L, y(29.8), pt(7), { font: F.regular, fill: MUTED }).svg);
 
   // Category and patents. The opening bracket hangs into the margin so the line
   // reads flush with the block above it.
@@ -283,18 +370,14 @@ function back() {
 
   // Coordinates, bottom-aligned on the logomark's lower edge by descender.
   const lh = pt(6.5) * 1.4;
-  const lines = [
-    '+65 9684 2308',
-    'yeksoon@askodin.app',
-    'askodin.app · 所在地: シンガポール',
-  ];
+  const lines = p.ja.contact;
   const lastBase = SAFE_B - descent(lines[lines.length - 1], pt(6.5), jp);
   lines.forEach((line, i) => {
     const y = lastBase - (lines.length - 1 - i) * lh;
     el.push(text(line, SAFE_L, y, pt(6.5), { ...jp, fill: DARK }).svg);
   });
 
-  return { svg: svg('askOdin Meishi — Back (JA)', el) };
+  return { svg: svg(`askOdin Meishi — Back (JA) — ${p.en.name}`, el) };
 }
 
 function svg(title, elements) {
@@ -362,19 +445,25 @@ async function makePdf(faces, outPath, { bleed }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-const f = front();
-const b = back();
-fs.writeFileSync(path.join(OUTPUT_DIR, 'card_front_en.svg'), f.svg);
-fs.writeFileSync(path.join(OUTPUT_DIR, 'card_back_ja.svg'), b.svg);
-await proof(f.svg, path.join(OUTPUT_DIR, 'card_front_en-proof.png'));
-await proof(b.svg, path.join(OUTPUT_DIR, 'card_back_ja-proof.png'));
-await makePdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-review.pdf'), { bleed: false });
-await makePdf([f.svg, b.svg], path.join(OUTPUT_DIR, 'card_meishi-print.pdf'),  { bleed: true  });
-
 console.log('=== Osaka meishi ===');
-console.log(`  card_front_en.svg   ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
-console.log(`  card_back_ja.svg    ${BLEED_W}x${BLEED_H}mm bleed / ${BLEED_W - TRIM * 2}x${BLEED_H - TRIM * 2}mm trim`);
-console.log(`  *-proof.png         trimmed 600dpi proofs`);
-console.log(`  card_meishi-review.pdf   2pp vector, ${TRIM_W}x${TRIM_H}mm trim — review only`);
-console.log(`  card_meishi-print.pdf    2pp vector, ${BLEED_W}x${BLEED_H}mm with ${TRIM}mm bleed — RGB, needs CMYK conversion`);
-console.log(`  QR  v${f.qr.version} ${f.qr.modules}x${f.qr.modules} EC-${QR_EC} · module ${f.qr.module.toFixed(3)}mm · ${QR_URL}`);
+console.log(`  ${BLEED_W}x${BLEED_H}mm bleed / ${TRIM_W}x${TRIM_H}mm trim / ${TRIM}mm nurishiashi`);
+
+for (const p of PEOPLE) {
+  const f = front(p);
+  const b = back(p);
+  const at = (name) => path.join(OUTPUT_DIR, p.out + name);
+
+  fs.writeFileSync(at('front_en.svg'), f.svg);
+  fs.writeFileSync(at('back_ja.svg'), b.svg);
+  await proof(f.svg, at('front_en-proof.png'));
+  await proof(b.svg, at('back_ja-proof.png'));
+  await makePdf([f.svg, b.svg], at('meishi-review.pdf'), { bleed: false });
+  await makePdf([f.svg, b.svg], at('meishi-print.pdf'),  { bleed: true  });
+
+  console.log(`\n  ${p.en.name} — ${p.en.title}`);
+  console.log(`    ${p.out}front_en.svg / ${p.out}back_ja.svg   outlined vector, with bleed`);
+  console.log(`    ${p.out}*-proof.png                          trimmed 600dpi proofs`);
+  console.log(`    ${p.out}meishi-review.pdf                    2pp vector at trim size — review only`);
+  console.log(`    ${p.out}meishi-print.pdf                     2pp vector with bleed — RGB, needs CMYK conversion`);
+  console.log(`    QR  v${f.qr.version} ${f.qr.modules}x${f.qr.modules} EC-${QR_EC} · module ${f.qr.module.toFixed(3)}mm · ${p.qrUrl}`);
+}

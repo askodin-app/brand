@@ -28,7 +28,7 @@ const STAGES = {
     ['generate-ico.mjs',              'packs .ico from the favicon PNGs above'],
     ['generate-businesscard.mjs',     'business card SVGs'],
     ['generate-card-pngs.mjs',        'rasterises the card SVGs above'],
-    ['generate-meishi.mjs',           'bilingual Osaka meishi + QR; needs Chrome for the review PDF'],
+    ['generate-meishi.mjs',           'bilingual Osaka meishi + QR, one per person; needs Chrome for the PDFs'],
     ['generate-accelerator-logo.mjs', 'composes 920x400 marks from combined/ + wordmark/'],
   ],
   // Independent of each other; each owns its own output folder.

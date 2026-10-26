@@ -4,15 +4,33 @@ What to send a Japanese printer, and the three pre-press steps this repo cannot 
 
 Regenerate everything with `node generate-meishi.mjs`.
 
+## Who has a card
+
+One set per person, from one generator and one baseline grid — the cards are
+designed to be handed across the same table.
+
+| Person | Title | File prefix |
+|---|---|---|
+| LOK Yek Soon | Founder & CEO | `card_` |
+| Dhiraj Wohra (DK) | Founding CRO | `card_dk_` |
+
+The CEO's card is the unprefixed original; renaming it would rot links already
+sent to printers. Add a person by appending to `PEOPLE` in `generate-meishi.mjs`.
+
+**DK's card carries no phone number**, at his request. The contact block is
+bottom-aligned, so it simply starts one line lower.
+
 ## Files
+
+Both sets below; `<p>` is the person's prefix from the table above.
 
 | File | Size | Send to printer? |
 |---|---|---|
-| `output/business-card/card_meishi-print.pdf` | 97 × 61mm, 2pp | **Yes** — after CMYK conversion below |
-| `output/business-card/card_front_en.svg` | 97 × 61mm | Only if they ask for vector source |
-| `output/business-card/card_back_ja.svg` | 97 × 61mm | Only if they ask for vector source |
-| `card_meishi-review.pdf` | 91 × 55mm, 2pp | No — trim size, no bleed. Internal review only |
-| `card_*-proof.png` | 91 × 55mm, 600dpi | No — raster proofs |
+| `output/business-card/<p>meishi-print.pdf` | 97 × 61mm, 2pp | **Yes** — after CMYK conversion below |
+| `output/business-card/<p>front_en.svg` | 97 × 61mm | Only if they ask for vector source |
+| `output/business-card/<p>back_ja.svg` | 97 × 61mm | Only if they ask for vector source |
+| `<p>meishi-review.pdf` | 91 × 55mm, 2pp | No — trim size, no bleed. Internal review only |
+| `<p>*-proof.png` | 91 × 55mm, 600dpi | No — raster proofs |
 
 Page 1 is the English front, page 2 the Japanese back. Split into 表/裏 files if
 the printer wants them separately.
@@ -23,7 +41,8 @@ the printer wants them separately.
 - **Bleed** 3mm all round → **97 × 61mm** canvas, the Raksul / Graphic standard.
   Their automated pre-flight rejects less. A 2mm US/SG house: set `TRIM = 2.0`
   in `generate-meishi.mjs` and re-run; the composition does not move.
-- **Safe area** 85 × 49mm. Verified from rendered pixels — all ink sits inside it.
+- **Safe area** 85 × 49mm. Verified from rendered pixels on both cards — all ink
+  sits inside it, other than the accent bar, which bleeds off the top by design.
 - **Tombo (トンボ)** not included. Raksul and Graphic's automated upload wants an
   exact-size document with no crop marks; a trade printer usually wants them.
   Ask, then add if needed — they are a small change to the generator.
@@ -65,16 +84,30 @@ meeting rooms the code was sized for.
 ## The QR
 
 Front, bottom-right. 13 × 13mm container, 1.5mm quiet zone, 29 × 29 modules at
-**0.345mm each**, encoding `https://www.linkedin.com/in/yeksoon`.
+**0.345mm each** on both cards, encoding that person's LinkedIn profile:
 
-Verified to decode from the finished card down to 100dpi. Do not let anyone
+| Card | Payload |
+|---|---|
+| `card_` | `https://www.linkedin.com/in/yeksoon` |
+| `card_dk_` | `https://www.linkedin.com/in/dhirajwohra` |
+
+LinkedIn's own QR appends a `?fromQR=1` tracking parameter. It is stripped: the
+shorter payload drops the code from 33 × 33 to 29 × 29, a 14% larger module and
+the difference between a marginal and a comfortable scan in a dim meeting room.
+
+Both verified to decode from the finished card down to 100dpi. Do not let anyone
 rescale, recolour or "clean up" the QR — regenerate it from the generator instead.
 
 ## Open items
 
 - **Japanese copy has not had a native read.** Typography is verified — bracket
   hanging, tracking, weights, no font substitution possible — but not whether the
-  wording lands with an Osaka partner.
+  wording lands with an Osaka partner. DK's 共同創業者 兼 最高収益責任者（CRO）is
+  new and unreviewed.
+- **DK's English and Japanese titles do not match.** The front reads *Founding
+  CRO*; the back reads 共同創業者 兼 最高収益責任者 — "Co-Founder & CRO". Both are
+  as specified, but a co-founder claim in Japanese is a stronger statement than
+  the English makes. Confirm before printing.
 - **Back face restructure on hold**: an OCR-friendly name-block reorder
   (Furigana → Kanji → Title) for Sansan/Eight, a Sony BSS affiliation line, and a
   `/jp` URL were proposed. The affiliation claim needs verifying and the URL needs
