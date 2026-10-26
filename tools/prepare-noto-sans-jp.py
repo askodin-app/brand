@@ -49,6 +49,21 @@ KANJI = (
     # Explainable AI" (generate-xai-note-ja.mjs) — note has no tables, so the
     # comparison and the three generations ship as images.
     "比較目質問成推移測独立徴量重引換約信紐手読作署名失敗停止世速流暢界視真字捏"
+    # Ninth block: note.com eyecatch + checklist for "What LPs Should Ask Their
+    # GPs About AI Diligence" (generate-what-lps-should-ask-note-ja.mjs).
+    "御背何起誰負"
+    # Tenth block: note.com eyecatch + deal-activity chart for "Why Private
+    # Equity's AI Adoption Is Hitting a Ceiling"
+    # (generate-private-equity-ai-adoption-ceiling-note-ja.mjs).
+    "天井功答企析支援処活利"
+    # Eleventh block: note.com eyecatch + invitation card for the Osaka /
+    # GSE2026 post (generate-osaka-gse2026-note-ja.mjs).
+    # 大阪で探しているもの——GSE2026に参加します.
+    "探加話交民差誘展"
+    # Twelfth block: note.com eyecatch + table figures for "The Halvard
+    # Dilemma" (generate-halvard-computing-ipo-note-ja.mjs) — the audit at a
+    # glance, the pillar table and the four findings.
+    "億拘束契架登課題義稼働容不裏軽微全額建足脚注含逆与払電末隠蔽次載柱軸減来着"
 )
 
 def charset() -> str:

@@ -121,6 +121,7 @@ The one rule that decides the folder name:
 | Product proof fragments for a marketing page | `output/crucible/` | ❌ |
 | Site-wide default OG mark | `output/og/` | ❌ |
 | Accelerator / application marks | `output/accelerator/` | ❌ |
+| note.com magazine identity (header) | `output/note/` | ❌ |
 
 **The podcast owns its whole namespace.** Episode art does not go in `output/social/`,
 even though it is dated like an article. The show and the Substack essay series share the
