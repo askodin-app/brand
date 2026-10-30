@@ -67,6 +67,8 @@ KANJI = (
     # AI agent ban article, Japanese site OG and hero
     # (generate-ai-agent-ban-liability-ja.mjs).
     "座銀顧"
+    # Japanese site OG cards (generate-ja-og-cards.mjs).
+    "両尺欠陥権算条管欺密各区範囲璧"
 )
 
 def charset() -> str:
