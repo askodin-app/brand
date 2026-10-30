@@ -64,6 +64,9 @@ KANJI = (
     # Dilemma" (generate-halvard-computing-ipo-note-ja.mjs) — the audit at a
     # glance, the pillar table and the four findings.
     "億拘束契架登課題義稼働容不裏軽微全額建足脚注含逆与払電末隠蔽次載柱軸減来着"
+    # AI agent ban article, Japanese site OG and hero
+    # (generate-ai-agent-ban-liability-ja.mjs).
+    "座銀顧"
 )
 
 def charset() -> str:
