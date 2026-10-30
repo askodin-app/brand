@@ -66,6 +66,7 @@ const STAGES = {
     ['generate-osaka-gse2026-note-ja.mjs',    'social/20261003-osaka-gse2026-note-ja/ — note.com eyecatch + invitation card'],
     ['generate-halvard-computing-ipo.mjs',   'social/20261026-halvard-computing-ipo/ — banners + Substack table figures'],
     ['generate-halvard-computing-ipo-note-ja.mjs', 'social/20261026-halvard-computing-ipo-note-ja/ — note.com eyecatch + table figures'],
+    ['generate-ai-agent-ban-liability.mjs',  'social/20261030-ai-agent-ban-liability/ — site OG + hero'],
     ['generate-oppo-lockscreen.mjs',        'wallpaper/ — OPPO Pad lock screen, 2800x2000'],
     ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
     ['generate-crucible-proof.mjs',           'crucible/ — product proof fragments for askodin.app/crucible'],
