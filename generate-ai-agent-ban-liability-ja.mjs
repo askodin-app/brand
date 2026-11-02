@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 「AIエージェント遮断の本質は技術ではない。「責任の所在」だ」 — OG and hero
+// 「AIエージェント遮断の本質は技術ではない。「責任の所在」だ」 — site + social
 // https://askodin.app/ja/insights/ai-agent-ban-liability/ (pubDate 2026-10-30)
 //
 // The Japanese edition of generate-ai-agent-ban-liability.mjs: same layouts,
@@ -14,6 +14,14 @@ import path from 'path';
 //
 //   og    1200x630  public/images/articles/ai-agent-ban-liability-ja-og.png
 //   hero  1600x640  public/images/articles/ai-agent-ban-liability-ja-hero.webp
+//
+// Plus the platform crops, the same stacked layout as the English set:
+//
+//   x-mobile  1080x1350  X 4:5
+//   square    1200x1200  LinkedIn 1:1; also usable as a note.com audio cover
+//
+// The note.com eyecatch is its own post, so it has its own generator:
+// generate-ai-agent-ban-liability-note-ja.mjs.
 //
 // If the hero's words change, change heroAlt on that page in the same commit.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,6 +60,8 @@ const HEADLINE_TURN = '「責任の所在」だ。';
 const STANDFIRST = ['機関投資家もいずれ、', '同じ線を引くことになる。'];
 const EYEBROW = '// MACRO THESIS';
 const URL_LINE = 'ASKODIN.APP/JA/INSIGHTS';
+// /ja/insights/ has no index page, so a crop that travels points at /ja/ instead.
+const CROP_URL_LINE = 'ASKODIN.APP/JA';
 
 const QUESTIONS_HEAD = '合意された基準は、まだない';
 const QUESTIONS = [
@@ -136,6 +146,8 @@ function wordmarkAt(x, y, size) {
 }
 const wordmarkEnd = (x, y, size) =>
   wordmarkAt(x - (width(F.semi, 'ask', size) + width(F.semi, 'Odin', size)), y, size);
+const wordmark = (cx, y, size) =>
+  wordmarkAt(cx - (width(F.semi, 'ask', size) + width(F.semi, 'Odin', size)) / 2, y, size);
 
 // ---------------------------------------------------------------------------
 // OG — 1200x630. Title left, the three unanswered questions right.
@@ -246,6 +258,80 @@ function hero(W, H) {
 }
 
 // ---------------------------------------------------------------------------
+// Stacked — X 4:5, LinkedIn 1:1. Title, then the line.
+// ---------------------------------------------------------------------------
+// 「 and 。 each carry half an em of blank, which would pull a centred line off
+// axis, so centre on the ink.
+function midInk(f, t, cx, y, size, fill, op = 1) {
+  const blank = (t.endsWith('。') ? 0.25 : 0) - (t.startsWith('「') ? 0.25 : 0);
+  return at(f, t, cx - width(f, t, size) / 2 + blank * size, y, size, fill, op);
+}
+
+function theLine(cx, y, s, inner) {
+  const el = [];
+  const x0 = cx - inner / 2;
+  const gap = 14 * s;
+  const right = cx + gap;
+  const lab = 27 * s;
+  const lineY = y + 36 * s;
+  const tagY = lineY + 58 * s;
+  el.push(at(F.jpMedium, RAILS[0].label, x0, y, lab, WHITE, 0.62));
+  el.push(at(F.jpMedium, RAILS[1].label, right, y, lab, WHITE, 0.62));
+  el.push(`<line x1="${x0}" y1="${lineY}" x2="${cx - gap}" y2="${lineY}" stroke="${ORANGE}" stroke-width="${6 * s}"/>`);
+  el.push(`<line x1="${right}" y1="${lineY}" x2="${cx + inner / 2}" y2="${lineY}" stroke="${ORANGE}" stroke-width="${3 * s}" stroke-dasharray="${12 * s} ${10 * s}" opacity="0.8"/>`);
+  el.push(at(F.jpMedium, RAILS[0].tag, x0, tagY, lab, ORANGE));
+  el.push(at(F.jpMedium, RAILS[1].tag, right, tagY, lab, WHITE, 0.62));
+  return { el, y: tagY };
+}
+
+function stacked(cx, s, inner, spread) {
+  const el = [];
+  let y = 0;
+  el.push(...wordmark(cx, (y += 32 * s), 32 * s));
+
+  y += 64 * s * spread;
+  el.push(...midTracked(F.monoMed, EYEBROW, cx, y, 20 * s, 5 * s, ORANGE, 1));
+
+  y += 100 * s * spread;
+  const hSize = fit(F.jpMedium, [...HEADLINE, HEADLINE_TURN], 80 * s, inner);
+  HEADLINE.forEach((line) => {
+    el.push(midInk(F.jpMedium, line, cx, y, hSize, WHITE, 0.96));
+    y += hSize * 1.32;
+  });
+  el.push(midInk(F.jpMedium, HEADLINE_TURN, cx, y, hSize, ORANGE));
+
+  y += 116 * s * spread;
+  const line = theLine(cx, y, s, inner);
+  el.push(...line.el);
+  y = line.y;
+
+  y += 104 * s * spread;
+  const sub = STANDFIRST.join('');
+  el.push(midInk(F.jpRegular, sub, cx, y, fit(F.jpRegular, [sub], 36 * s, inner), WHITE, 0.78));
+
+  y += 66 * s * spread;
+  el.push(...midTracked(F.mono, CROP_URL_LINE, cx, y, 17 * s, 4.4 * s, WHITE, 0.4));
+  return { el, height: y };
+}
+
+function solveSpread(layout, cx, s, inner, want) {
+  let lo = 0.5, hi = 3.6;
+  for (let i = 0; i < 30; i++) {
+    const m = (lo + hi) / 2;
+    if (layout(cx, s, inner, m).height < want) lo = m; else hi = m;
+  }
+  return lo;
+}
+
+function frame(W, H, layout, { s, margin, target }) {
+  const inner = W - margin * 2;
+  const spread = solveSpread(layout, W / 2, s, inner, H * target);
+  const { el, height } = layout(W / 2, s, inner, spread);
+  const ty = (H - height) / 2 + 12 * s;
+  return [...backdrop(W, H), `<g transform="translate(0 ${ty.toFixed(1)})">`, ...el, `</g>`];
+}
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 const svgFor = (title, W, H, el) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -268,6 +354,10 @@ async function main() {
   const T = `${TITLE} — askOdin`;
   await emit(`askOdin-${SLUG}-og`, 1200, 630, svgFor(T, 1200, 630, og(1200, 630)));
   await emit(`askOdin-${SLUG}-hero`, 1600, 640, svgFor(T, 1600, 640, hero(1600, 640)));
+  await emit(`askOdin-${SLUG}-x-mobile`, 1080, 1350,
+    svgFor(T, 1080, 1350, frame(1080, 1350, stacked, { s: 1.0, margin: 90, target: 0.78 })));
+  await emit(`askOdin-${SLUG}-square`, 1200, 1200,
+    svgFor(T, 1200, 1200, frame(1200, 1200, stacked, { s: 1.0, margin: 110, target: 0.8 })));
   console.log(`\nWrote ${ASSET_DIR}/`);
 }
 

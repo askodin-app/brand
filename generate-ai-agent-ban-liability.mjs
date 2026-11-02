@@ -4,14 +4,23 @@ import fs from 'fs';
 import path from 'path';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// "The Agent Ban Is Not About Technology. It Is About Liability." — OG and hero
+// "The Agent Ban Is Not About Technology. It Is About Liability." — site + social
 // https://askodin.app/insights/ai-agent-ban-liability/ (pubDate 2026-10-30)
 //
 // Copy is condensed from src/content/insights/ai-agent-ban-liability.mdx in
-// askodin-coming-soon. Two images, both for the site:
+// askodin-coming-soon. Two images for the site:
 //
 //   og    1200x630  public/images/articles/ai-agent-ban-liability-og.png
 //   hero  1600x640  public/images/articles/ai-agent-ban-liability-hero.webp
+//
+// and the platform crops, which never leave this repo:
+//
+//   substack-hero  1600x900   the OG composition on Substack's 16:9 frame
+//   substack-og    1456x1048  Substack share frame
+//   x-mobile       1080x1350  X 4:5
+//   square         1200x1200  LinkedIn 1:1
+//
+// The crops are feed-sized, so the hero's rails reduce to the one line alone.
 //
 // The hero is the article's turn drawn as one line: solid where the banks have
 // drawn it across consumer logins, dashed where allocators have not yet drawn it
@@ -96,6 +105,7 @@ function tracked(f, t, x, y, size, track, fill, op) {
 const trackedW = (f, t, size, track) => width(f, t, size) + track * Math.max(0, t.length - 1);
 const midTracked = (f, t, cx, y, size, track, fill, op) =>
   tracked(f, t, cx - trackedW(f, t, size, track) / 2, y, size, track, fill, op);
+const mid = (f, t, cx, y, size, fill, op = 1) => at(f, t, cx - width(f, t, size) / 2, y, size, fill, op);
 
 function fit(f, lines, size, maxW) {
   while (size > 10 && lines.some((l) => width(f, l, size) > maxW)) size -= 1;
@@ -129,12 +139,15 @@ function wordmarkAt(x, y, size) {
 }
 const wordmarkEnd = (x, y, size) =>
   wordmarkAt(x - (width(F.semi, 'ask', size) + width(F.semi, 'Odin', size)), y, size);
+const wordmark = (cx, y, size) =>
+  wordmarkAt(cx - (width(F.semi, 'ask', size) + width(F.semi, 'Odin', size)) / 2, y, size);
 
 // ---------------------------------------------------------------------------
 // OG — 1200x630. Title left, the three unanswered questions right.
 // ---------------------------------------------------------------------------
-function og(W, H) {
-  const el = backdrop(W, H);
+function ogBody() {
+  const W = 1200;
+  const el = [];
   const L = 84;
   const colW = 590;
 
@@ -171,6 +184,13 @@ function og(W, H) {
     if (i < QUESTIONS.length - 1) el.push(`<line x1="${R}" y1="${y + 34}" x2="${R + rW}" y2="${y + 34}" stroke="${WHITE}" stroke-width="1" opacity="0.1"/>`);
   });
   return el;
+}
+const og = (W, H) => [...backdrop(W, H), ...ogBody()];
+
+// The same composition, scaled to width and centred on a taller frame.
+function substackHero(W, H) {
+  const k = W / 1200;
+  return [...backdrop(W, H), `<g transform="translate(0 ${(H - 630 * k) / 2}) scale(${k})">`, ...ogBody(), `</g>`];
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +258,73 @@ function hero(W, H) {
 }
 
 // ---------------------------------------------------------------------------
+// Stacked — Substack share, X 4:5, LinkedIn 1:1. Title, then the line.
+// ---------------------------------------------------------------------------
+function theLine(cx, y, s, inner) {
+  const el = [];
+  const x0 = cx - inner / 2;
+  const gap = 14 * s;
+  const right = cx + gap;
+  const lab = 24 * s;
+  const lineY = y + 34 * s;
+  const tagY = lineY + 54 * s;
+  el.push(...tracked(F.mono, RAILS[0].label, x0, y, lab, 3 * s, WHITE, 0.62));
+  el.push(...tracked(F.mono, RAILS[1].label, right, y, lab, 3 * s, WHITE, 0.62));
+  el.push(`<line x1="${x0}" y1="${lineY}" x2="${cx - gap}" y2="${lineY}" stroke="${ORANGE}" stroke-width="${6 * s}"/>`);
+  el.push(`<line x1="${right}" y1="${lineY}" x2="${cx + inner / 2}" y2="${lineY}" stroke="${ORANGE}" stroke-width="${3 * s}" stroke-dasharray="${12 * s} ${10 * s}" opacity="0.8"/>`);
+  el.push(...tracked(F.monoMed, RAILS[0].tag, x0, tagY, lab, 3 * s, ORANGE, 1));
+  el.push(...tracked(F.monoMed, RAILS[1].tag, right, tagY, lab, 3 * s, WHITE, 0.62));
+  return { el, y: tagY };
+}
+
+function stacked(cx, s, inner, spread) {
+  const el = [];
+  let y = 0;
+  el.push(...wordmark(cx, (y += 32 * s), 32 * s));
+
+  y += 64 * s * spread;
+  el.push(...midTracked(F.monoMed, EYEBROW, cx, y, 20 * s, 5 * s, ORANGE, 1));
+
+  y += 96 * s * spread;
+  const hSize = fit(F.light, [...HEADLINE, HEADLINE_TURN], 88 * s, inner);
+  HEADLINE.forEach((line) => {
+    el.push(mid(F.light, line, cx, y, hSize, WHITE, 0.96));
+    y += hSize * 1.16;
+  });
+  el.push(mid(F.light, HEADLINE_TURN, cx, y, hSize, ORANGE));
+
+  y += 112 * s * spread;
+  const line = theLine(cx, y, s, inner);
+  el.push(...line.el);
+  y = line.y;
+
+  y += 104 * s * spread;
+  const sub = STANDFIRST.join(' ');
+  el.push(mid(F.serifIt, sub, cx, y, fit(F.serifIt, [sub], 34 * s, inner), WHITE, 0.74));
+
+  y += 66 * s * spread;
+  el.push(...midTracked(F.mono, URL_LINE, cx, y, 17 * s, 4.4 * s, WHITE, 0.4));
+  return { el, height: y };
+}
+
+function solveSpread(layout, cx, s, inner, want) {
+  let lo = 0.5, hi = 3.6;
+  for (let i = 0; i < 30; i++) {
+    const m = (lo + hi) / 2;
+    if (layout(cx, s, inner, m).height < want) lo = m; else hi = m;
+  }
+  return lo;
+}
+
+function frame(W, H, layout, { s, margin, target }) {
+  const inner = W - margin * 2;
+  const spread = solveSpread(layout, W / 2, s, inner, H * target);
+  const { el, height } = layout(W / 2, s, inner, spread);
+  const ty = (H - height) / 2 + 12 * s;
+  return [...backdrop(W, H), `<g transform="translate(0 ${ty.toFixed(1)})">`, ...el, `</g>`];
+}
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 const svgFor = (title, W, H, el) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -260,6 +347,13 @@ async function main() {
   const T = `${TITLE} — askOdin`;
   await emit(`askOdin-${SLUG}-og`, 1200, 630, svgFor(T, 1200, 630, og(1200, 630)));
   await emit(`askOdin-${SLUG}-hero`, 1600, 640, svgFor(T, 1600, 640, hero(1600, 640)));
+  await emit(`askOdin-${SLUG}-substack-hero`, 1600, 900, svgFor(T, 1600, 900, substackHero(1600, 900)));
+  await emit(`askOdin-${SLUG}-substack-og`, 1456, 1048,
+    svgFor(T, 1456, 1048, frame(1456, 1048, stacked, { s: 0.92, margin: 200, target: 0.8 })));
+  await emit(`askOdin-${SLUG}-x-mobile`, 1080, 1350,
+    svgFor(T, 1080, 1350, frame(1080, 1350, stacked, { s: 1.0, margin: 90, target: 0.78 })));
+  await emit(`askOdin-${SLUG}-square`, 1200, 1200,
+    svgFor(T, 1200, 1200, frame(1200, 1200, stacked, { s: 1.0, margin: 110, target: 0.8 })));
   console.log(`\nWrote ${ASSET_DIR}/`);
 }
 
