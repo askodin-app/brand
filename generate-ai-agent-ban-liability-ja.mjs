@@ -59,9 +59,8 @@ const HEADLINE = ['AIエージェント遮断の', '本質は技術ではない�
 const HEADLINE_TURN = '「責任の所在」だ。';
 const STANDFIRST = ['機関投資家もいずれ、', '同じ線を引くことになる。'];
 const EYEBROW = '// MACRO THESIS';
-const URL_LINE = 'ASKODIN.APP/JA/INSIGHTS';
-// /ja/insights/ has no index page, so a crop that travels points at /ja/ instead.
-const CROP_URL_LINE = 'ASKODIN.APP/JA';
+// /ja/insights/ has no index page, so an image that travels points at /ja/ instead.
+const URL_LINE = 'ASKODIN.APP/JA';
 
 const QUESTIONS_HEAD = '合意された基準は、まだない';
 const QUESTIONS = [
@@ -310,7 +309,7 @@ function stacked(cx, s, inner, spread) {
   el.push(midInk(F.jpRegular, sub, cx, y, fit(F.jpRegular, [sub], 36 * s, inner), WHITE, 0.78));
 
   y += 66 * s * spread;
-  el.push(...midTracked(F.mono, CROP_URL_LINE, cx, y, 17 * s, 4.4 * s, WHITE, 0.4));
+  el.push(...midTracked(F.mono, URL_LINE, cx, y, 17 * s, 4.4 * s, WHITE, 0.4));
   return { el, height: y };
 }
 
