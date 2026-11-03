@@ -69,6 +69,12 @@ KANJI = (
     "座銀顧"
     # Japanese site OG cards (generate-ja-og-cards.mjs).
     "両尺欠陥権算条管欺密各区範囲璧"
+    # Site OG + checklist for the Japanese LP article
+    # (generate-what-lps-should-ask-ja.mjs). 良い回答 and its seven lines.
+    "具挙繕送託先添秘匿良"
+    # Japanese site OG + hero for "Sounding Thorough vs. Being Thorough"
+    # (generate-sounding-thorough-vs-being-thorough-ja.mjs).
+    "徹底低材局私詰二典言追跡鍛"
 )
 
 def charset() -> str:
