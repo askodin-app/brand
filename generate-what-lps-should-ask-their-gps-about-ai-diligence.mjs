@@ -10,13 +10,15 @@ import path from 'path';
 // Every line of copy below is quoted or condensed from
 // src/content/insights/what-lps-should-ask-their-gps-about-ai-diligence.mdx in
 // askodin-coming-soon. The one-line "good answer" per question is copied
-// verbatim from that repo's src/data/lp-ai-diligence-checklist.json, which also
-// drives the checklist on the page — if a question changes there, change it
-// here in the same edit.
+// from that repo's src/data/lp-ai-diligence-checklist.json at run time, which
+// also drives the checklist on the page, so the two cannot drift. (They did:
+// until 2026-11-03 this file hard-coded Q6 as "Same documents, same verdict,
+// months later" after the site had corrected it.)
 //
-// The site already ships its own 1200x630 OG and a 1080x1350 checklist PNG
-// (public/images/articles/what-lps-should-ask-*.png). This set is everything
-// else the article needs off-site, in the house banner style:
+// The site ships its own 1200x630 OG. Its 1080x1350 checklist PNG
+// (public/images/articles/what-lps-should-ask-checklist.png) is rendered here as
+// banners/askOdin-lp-questions-site-checklist.png. The rest of this set is what
+// the article needs off-site, in the house banner style:
 //
 //   banners/  the article's identity — OG, Substack hero + share frame, X 4:5,
 //             LinkedIn 1:1. Headline, standfirst, and (landscape) the seven checks.
@@ -37,7 +39,11 @@ const F = {
   mono: opentype.loadSync('./fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf'),
   monoMed: opentype.loadSync('./fonts/IBM_Plex_Mono/IBMPlexMono-Medium.ttf'),
   serifIt: opentype.loadSync('./fonts/IBM_Plex_Serif/IBMPlexSerif-Italic.ttf'),
+  serif: opentype.loadSync('./fonts/IBM_Plex_Serif/IBMPlexSerif-Regular.ttf'),
 };
+
+const CHECKLIST = JSON.parse(fs.readFileSync('../askodin-coming-soon/src/data/lp-ai-diligence-checklist.json', 'utf8'));
+const curly = (t) => t.replace(/'/g, '\u2019');
 
 const ORANGE = '#DB4A2B';
 const GREEN = '#147B58';
@@ -66,32 +72,30 @@ const URL_LINE = 'ASKODIN.APP/INSIGHTS';
 const NO_TECH = 'NONE OF THEM NEEDS A TECHNICAL BACKGROUND';
 const FOOTER = 'WHAT LPS SHOULD ASK THEIR GPS · ASKODIN.APP';
 
-// short: the site OG's labels. good: lp-ai-diligence-checklist.json, verbatim.
+// short: the site OG's labels. good: filled from lp-ai-diligence-checklist.json below.
 // weak: the article's "A weak answer" paragraph for each, quoted or condensed.
 const QUESTIONS = [
   { short: 'The standard', q: 'What standard does your diligence apply?',
-    good: 'It names the tests a claim must pass before anyone relies on it.',
     weak: '“We use AI to be more efficient.” A process, with no standard named.' },
   { short: 'The reasoning', q: 'Can you show me the reasoning behind a conclusion?',
-    good: 'Every claim traces to a source document, and contradictions are named.',
     weak: 'A summary with no traceability. The reasoning felt right. The model said so.' },
   { short: 'The failure mode', q: 'What happens when a claim fails the test?',
-    good: 'The system flags the violation and stops. It does not smooth it over.',
     weak: '“It summarizes the data room.” Summarization hides contradictions.' },
   { short: 'The data', q: 'Where does the deal data go?',
-    good: 'Named subprocessors, a stated retention window, no training, a written policy.',
     weak: '“It’s all secure.” “We use a leading provider.” Vagueness is not a security posture.' },
   { short: 'The accountable partner', q: 'Who is accountable for the output?',
-    good: 'A named partner signs off, with the reasoning trail attached.',
     weak: '“The team reviews it.” Nobody named, no signature required.' },
   { short: 'Reproducibility', q: 'Is the verdict reproducible?',
-    good: 'Same documents, same verdict, months later.',
     weak: '“A human always makes the final call.” That avoids the question.' },
   { short: 'A real audit', q: 'Can you show me a real audit?',
-    good: 'A redacted reasoning trail from the fund’s own pipeline, not a vendor demo.',
     weak: 'An explanation of why they cannot share one.' },
 ];
 if (QUESTIONS.length !== 7) throw new Error('The article asks seven questions');
+QUESTIONS.forEach((q, i) => {
+  const src = CHECKLIST.items[i];
+  if (src.q !== q.q) throw new Error(`Q${i + 1} differs from lp-ai-diligence-checklist.json: ${src.q}`);
+  q.good = curly(src.good);
+});
 // The article: "This is the most important question on the list".
 const MOST_IMPORTANT = 2;
 
@@ -555,6 +559,57 @@ async function emit(dir, name, W, H, svg) {
 }
 
 // ---------------------------------------------------------------------------
+// Site checklist — 1080x1350, the download beside the live list on the page.
+// ---------------------------------------------------------------------------
+function siteChecklist(W, H) {
+  const el = [`<rect width="${W}" height="${H}" fill="${DARK}"/>`, `<rect width="${W}" height="10" fill="${GREEN}"/>`];
+  const L = 84;
+  el.push(...tracked(F.mono, 'LP CHECKLIST', L, 104, 22, 4.4, GREEN_TEXT, 1));
+  wrap(F.semi, CHECKLIST.title, 50, W - L * 2).forEach((line, i) => el.push(at(F.semi, line, L, 180 + i * 60, 50, WHITE)));
+
+  const tx = 186;
+  const textW = W - L - tx;
+  const tag = 'GOOD ANSWER';
+  const tagSize = 19;
+  const tagW = width(F.semi, tag, tagSize) + tagSize * 0.06 * (tag.length - 1);
+  const size = 23;
+  let y = 304;
+  QUESTIONS.forEach((q, i) => {
+    el.push(...tracked(F.monoMed, nn(i), 124, y, 26, 0.5, GREEN_TEXT, 1));
+    el.push(at(F.semi, q.q, tx, y, fit(F.semi, [q.q], 29, textW), WHITE));
+    y += 42;
+    el.push(...tracked(F.semi, tag, tx, y, tagSize, tagSize * 0.06, '#94A3B8', 1));
+    // The first line runs on after the tag; the second returns to the margin.
+    // Break where the two lines come out most even, so none ends on a widow.
+    const words = q.good.split(' ');
+    const first = textW - tagW - 12;
+    let lines = [q.good];
+    if (width(F.serif, q.good, size) > first) {
+      let best = Infinity;
+      for (let k = 1; k < words.length; k++) {
+        const a = words.slice(0, k).join(' ');
+        const b = words.slice(k).join(' ');
+        const wa = width(F.serif, a, size);
+        const wb = width(F.serif, b, size);
+        if (wa > first || wb > textW) continue;
+        const cost = Math.abs(tagW + 12 + wa - wb);
+        if (cost < best) { best = cost; lines = [a, b]; }
+      }
+      if (lines.length === 1) throw new Error(`No two-line break fits: ${q.good}`);
+    }
+    lines.forEach((t, j) => el.push(at(F.serif, t, j ? tx : tx + tagW + 12, y + j * 32, size, '#CBD5E1')));
+    y += (lines.length - 1) * 32 + 56;
+  });
+  if (y - 56 > 1180) throw new Error(`Checklist runs to ${y - 56}px; the footer rule is at 1208.`);
+
+  el.push(`<line x1="${L}" y1="1208" x2="${W - L}" y2="1208" stroke="${WHITE}" stroke-width="1" opacity="0.14"/>`);
+  el.push(...tracked(F.mono, 'askodin.app/insights', L, 1274, 21, 0.6, '#94A3B8', 1));
+  const wm = 40;
+  el.push(...wordmarkAt(W - L - width(F.semi, 'askOdin', wm), 1276, wm));
+  return el;
+}
+
+// ---------------------------------------------------------------------------
 // LinkedIn document carousel — 4:5 pages, vector, one PDF.
 //
 // PDF /Title and /Author are stamped by incremental update, and Chrome's own
@@ -648,6 +703,10 @@ async function main() {
   // LinkedIn in-feed image post, 1:1.
   await emit(BANNER_DIR, `askOdin-${SLUG}-linkedin-square`, 1200, 1200,
     svgFor(T, 1200, 1200, frame(1200, 1200, bannerStacked, { s: 0.94, margin: 110, target: 0.8 })));
+
+  // The site's downloadable checklist, copied to public/images/articles/.
+  await emit(BANNER_DIR, `askOdin-${SLUG}-site-checklist`, 1080, 1350,
+    svgFor(`${CHECKLIST.title} — askOdin`, 1080, 1350, siteChecklist(1080, 1350)));
 
   console.log('\ncards/');
   const portrait = {};
