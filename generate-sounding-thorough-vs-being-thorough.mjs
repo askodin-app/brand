@@ -10,6 +10,13 @@ import path from 'path';
 //   og    1200x630  public/images/articles/sounding-thorough-vs-being-thorough-og.png
 //   hero  1600x640  public/images/articles/sounding-thorough-vs-being-thorough-hero.webp
 //
+// and the platform crops, which never leave this repo:
+//
+//   substack-hero  1600x900   the OG composition on Substack's 16:9 frame
+//   substack-og    1456x1048  Substack share frame
+//   x-mobile       1080x1350  X 4:5
+//   square         1200x1200  LinkedIn 1:1
+//
 // Chrome and primitives follow generate-ai-agent-ban-liability.mjs. The hero is
 // the article's turn drawn as two pipelines over the same documents: one that
 // summarizes, one that separates extraction from evaluation and keeps a record.
@@ -232,6 +239,65 @@ function hero(W, H) {
 }
 
 // ---------------------------------------------------------------------------
+// Platform crops. The Substack hero is the OG composition centred on 16:9; the
+// stacked frames carry the headline and the model's line, nothing else.
+// ---------------------------------------------------------------------------
+function substackHero(W, H) {
+  const k = W / 1200;
+  const body = og(1200, 630).slice(backdrop(1200, 630).length);
+  return [...backdrop(W, H), `<g transform="translate(0 ${((H - 630 * k) / 2).toFixed(1)}) scale(${k})">`, ...body, `</g>`];
+}
+
+const QUOTE_STACKED = ['\u201CLook, in the end, I\u2019m better at', 'sounding thorough than being thorough.\u201D'];
+
+function stacked(cx, s, inner, spread) {
+  const el = [];
+  let y = 0;
+  el.push(...wordmark(cx, (y += 32 * s), 32 * s));
+
+  y += 64 * s * spread;
+  el.push(...midTracked(F.monoMed, EYEBROW, cx, y, 20 * s, 5 * s, ORANGE, 1));
+
+  y += 100 * s * spread;
+  const hSize = fit(F.light, [...HEADLINE, HEADLINE_TURN], 92 * s, inner);
+  HEADLINE.forEach((line) => {
+    el.push(mid(F.light, line, cx, y, hSize, WHITE, 0.96));
+    y += hSize * 1.14;
+  });
+  el.push(mid(F.light, HEADLINE_TURN, cx, y, hSize, ORANGE));
+
+  y += 64 * s * spread;
+  el.push(`<line x1="${(cx - 32 * s).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(cx + 32 * s).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ORANGE}" stroke-width="${(3 * s).toFixed(1)}"/>`);
+
+  y += 76 * s * spread;
+  const qSize = fit(F.serifIt, QUOTE_STACKED, 38 * s, inner);
+  QUOTE_STACKED.forEach((line, i) => el.push(mid(F.serifIt, line, cx, y + i * qSize * 1.4, qSize, WHITE, 0.9)));
+  y += (QUOTE_STACKED.length - 1) * qSize * 1.4 + 52 * s * spread;
+  el.push(...midTracked(F.mono, `${QUOTE_BY} ${QUOTE_BY2}`, cx, y, 16 * s, 3 * s, WHITE, 0.6));
+
+  y += 74 * s * spread;
+  el.push(...midTracked(F.mono, URL_LINE, cx, y, 17 * s, 4.4 * s, WHITE, 0.4));
+  return { el, height: y };
+}
+
+function solveSpread(layout, cx, s, inner, want) {
+  let lo = 0.5, hi = 3.6;
+  for (let i = 0; i < 30; i++) {
+    const m = (lo + hi) / 2;
+    if (layout(cx, s, inner, m).height < want) lo = m; else hi = m;
+  }
+  return lo;
+}
+
+function frame(W, H, layout, { s, margin, target }) {
+  const inner = W - margin * 2;
+  const spread = solveSpread(layout, W / 2, s, inner, H * target);
+  const { el, height } = layout(W / 2, s, inner, spread);
+  const ty = (H - height) / 2 + 12 * s;
+  return [...backdrop(W, H), `<g transform="translate(0 ${ty.toFixed(1)})">`, ...el, `</g>`];
+}
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 const svgFor = (title, W, H, el) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -254,6 +320,13 @@ async function main() {
   const T = `${TITLE} — askOdin`;
   await emit(`askOdin-${SLUG}-og`, 1200, 630, svgFor(T, 1200, 630, og(1200, 630)));
   await emit(`askOdin-${SLUG}-hero`, 1600, 640, svgFor(T, 1600, 640, hero(1600, 640)));
+  await emit(`askOdin-${SLUG}-substack-hero`, 1600, 900, svgFor(T, 1600, 900, substackHero(1600, 900)));
+  await emit(`askOdin-${SLUG}-substack-og`, 1456, 1048,
+    svgFor(T, 1456, 1048, frame(1456, 1048, stacked, { s: 0.92, margin: 200, target: 0.8 })));
+  await emit(`askOdin-${SLUG}-x-mobile`, 1080, 1350,
+    svgFor(T, 1080, 1350, frame(1080, 1350, stacked, { s: 1.0, margin: 90, target: 0.78 })));
+  await emit(`askOdin-${SLUG}-square`, 1200, 1200,
+    svgFor(T, 1200, 1200, frame(1200, 1200, stacked, { s: 1.0, margin: 110, target: 0.8 })));
   console.log(`\nWrote ${ASSET_DIR}/`);
 }
 

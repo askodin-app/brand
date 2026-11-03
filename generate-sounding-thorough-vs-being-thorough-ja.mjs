@@ -10,6 +10,13 @@ import path from 'path';
 //   og    1200x630  public/images/articles/sounding-thorough-vs-being-thorough-ja-og.png
 //   hero  1600x640  public/images/articles/sounding-thorough-vs-being-thorough-ja-hero.webp
 //
+// and the platform crops, which never leave this repo:
+//
+//   x-mobile  1080x1350  X 4:5
+//   square    1200x1200  LinkedIn 1:1
+//   note      1280x670 (+1920, +2x)  note.com eyecatch, the OG composition, in
+//             output/social/20261103-sounding-thorough-vs-being-thorough-note-ja/
+//
 // The same two compositions as generate-sounding-thorough-vs-being-thorough.mjs,
 // set in Noto Sans JP with Plex for Latin. The quotation is our rendering of the
 // model's line in the Goldman Sachs Exchanges transcript (24 Aug 2026), as on the
@@ -225,6 +232,72 @@ function hero(W, H) {
 }
 
 // ---------------------------------------------------------------------------
+// Platform crops
+// ---------------------------------------------------------------------------
+const QUOTE_STACKED = ['「結局のところ、私は徹底していることより、', '徹底して見えることのほうが得意なのです」'];
+
+function stacked(cx, s, inner, spread) {
+  const el = [];
+  let y = 0;
+  const wm = 32 * s;
+  el.push(...wordmarkAt(cx - F.semi.getAdvanceWidth('askOdin', wm) / 2, (y += wm), wm));
+
+  y += 64 * s * spread;
+  const eyebrowW = [...EYEBROW].reduce((w, ch) => w + F.monoMed.charToGlyph(ch).advanceWidth * (20 * s / F.monoMed.unitsPerEm) + 5 * s, -5 * s);
+  el.push(...tracked(EYEBROW, cx - eyebrowW / 2, y, 20 * s, 5 * s, ORANGE, 1, F.monoMed));
+
+  y += 96 * s * spread;
+  const hSize = fitJP([...HEADLINE, HEADLINE_TURN], 64 * s, F.jpRegular, inner);
+  HEADLINE.forEach((line) => {
+    el.push(midRun(line, cx, y, hSize, F.jpRegular, WHITE, 0.96));
+    y += hSize * 1.36;
+  });
+  el.push(midRun(HEADLINE_TURN, cx, y, hSize, F.jpRegular, ORANGE));
+
+  y += 60 * s * spread;
+  el.push(`<line x1="${(cx - 32 * s).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(cx + 32 * s).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ORANGE}" stroke-width="${(3 * s).toFixed(1)}"/>`);
+
+  y += 72 * s * spread;
+  const sSize = fitJP(STANDFIRST, 30 * s, F.jpRegular, inner);
+  STANDFIRST.forEach((line, i) => el.push(midRun(line, cx, y + i * sSize * 1.6, sSize, F.jpRegular, WHITE, 0.78)));
+  y += (STANDFIRST.length - 1) * sSize * 1.6 + 70 * s * spread;
+
+  const qSize = fitJP(QUOTE_STACKED, 28 * s, F.jpMedium, inner);
+  QUOTE_STACKED.forEach((line, i) => el.push(midRun(line, cx, y + i * qSize * 1.6, qSize, F.jpMedium, WHITE, 0.92)));
+  y += (QUOTE_STACKED.length - 1) * qSize * 1.6 + 44 * s * spread;
+  el.push(midRun(QUOTE_BY, cx, y, 18 * s, F.jpRegular, WHITE, 0.6));
+
+  y += 70 * s * spread;
+  const urlW = [...URL_LINE].reduce((w, ch) => w + F.mono.charToGlyph(ch).advanceWidth * (17 * s / F.mono.unitsPerEm) + 4.4 * s, -4.4 * s);
+  el.push(...tracked(URL_LINE, cx - urlW / 2, y, 17 * s, 4.4 * s, WHITE, 0.4));
+  return { el, height: y };
+}
+
+function solveSpread(layout, cx, s, inner, want) {
+  let lo = 0.5, hi = 3.6;
+  for (let i = 0; i < 30; i++) {
+    const m = (lo + hi) / 2;
+    if (layout(cx, s, inner, m).height < want) lo = m; else hi = m;
+  }
+  return lo;
+}
+
+function frame(W, H, layout, { s, margin, target }) {
+  const inner = W - margin * 2;
+  const spread = solveSpread(layout, W / 2, s, inner, H * target);
+  const { el, height } = layout(W / 2, s, inner, spread);
+  const ty = (H - height) / 2 + 12 * s;
+  return [...backdrop(W, H), `<g transform="translate(0 ${ty.toFixed(1)})">`, ...el, `</g>`];
+}
+
+// note.com's eyecatch is 1280x670, the OG's 1.91:1 at a slightly larger size.
+function noteEyecatch(W, H) {
+  const k = W / 1200;
+  const body = og(1200, 630).slice(backdrop(1200, 630).length);
+  return [...backdrop(W, H), `<g transform="translate(0 ${((H - 630 * k) / 2).toFixed(1)}) scale(${k})">`, ...body, `</g>`];
+}
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 const svgFor = (title, W, H, el) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -246,6 +319,21 @@ async function main() {
   const T = `${TITLE} — askOdin`;
   await emit(`askOdin-${SLUG}-og`, 1200, 630, svgFor(T, 1200, 630, og(1200, 630)));
   await emit(`askOdin-${SLUG}-hero`, 1600, 640, svgFor(T, 1600, 640, hero(1600, 640)));
+  await emit(`askOdin-${SLUG}-x-mobile`, 1080, 1350,
+    svgFor(T, 1080, 1350, frame(1080, 1350, stacked, { s: 1.0, margin: 90, target: 0.78 })));
+  await emit(`askOdin-${SLUG}-square`, 1200, 1200,
+    svgFor(T, 1200, 1200, frame(1200, 1200, stacked, { s: 1.0, margin: 110, target: 0.8 })));
+
+  // note.com: its own publication, so its own folder, as the other note posts.
+  const NOTE_DIR = './output/social/20261103-sounding-thorough-vs-being-thorough-note-ja';
+  for (const d of ['banners', 'svg']) fs.mkdirSync(path.join(NOTE_DIR, d), { recursive: true });
+  const name = 'askOdin-sounding-thorough-note-ja';
+  const svg = svgFor(T, 1280, 670, noteEyecatch(1280, 670));
+  fs.writeFileSync(path.join(NOTE_DIR, 'svg', `${name}.svg`), svg);
+  for (const [w, h, suffix] of [[1280, 670, ''], [1920, 1006, '-1920'], [2560, 1340, '-2x']]) {
+    await sharp(Buffer.from(svg), { density: 300 }).resize(w, h, { fit: 'fill' }).png().toFile(path.join(NOTE_DIR, 'banners', `${name}${suffix}.png`));
+  }
+  console.log(`  ${name}: 1280x670, 1920x1006, 2560x1340 -> ${NOTE_DIR}/`);
   console.log(`Wrote ${ASSET_DIR}/`);
 }
 

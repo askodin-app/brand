@@ -77,6 +77,9 @@ KANJI = (
     "徹底低材局私詰二典言追跡鍛"
     # /ja/insights/ hub and article cards (generate-ja-og-cards.mjs).
     "由"
+    # Data retention fork, Japanese crops and note.com eyecatch
+    # (generate-ai-data-retention-fork.mjs).
+    "岐"
 )
 
 def charset() -> str:
