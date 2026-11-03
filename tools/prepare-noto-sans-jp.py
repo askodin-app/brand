@@ -75,6 +75,8 @@ KANJI = (
     # Japanese site OG + hero for "Sounding Thorough vs. Being Thorough"
     # (generate-sounding-thorough-vs-being-thorough-ja.mjs).
     "徹底低材局私詰二典言追跡鍛"
+    # /ja/insights/ hub and article cards (generate-ja-og-cards.mjs).
+    "由"
 )
 
 def charset() -> str:
