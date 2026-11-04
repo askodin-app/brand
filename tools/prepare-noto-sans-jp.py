@@ -80,6 +80,9 @@ KANJI = (
     # Data retention fork, Japanese crops and note.com eyecatch
     # (generate-ai-data-retention-fork.mjs).
     "岐"
+    # Japanese OG cards for the tools comparison, the layer-beneath-agents essay
+    # and the brittle-assumption framework (generate-ja-og-cards.mjs), 2026-11-04.
+    "索層崩倒"
 )
 
 def charset() -> str:
