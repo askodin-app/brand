@@ -546,7 +546,7 @@ function runJ(t, x, y, f, size, fill, op = 1, track = 0) {
 const midJ = (t, cx, y, f, size, fill, op, track = 0) => runJ(t, cx - widthJ(t, f, size, track) / 2, y, f, size, fill, op, track);
 const fitJ = (lines, f, size, maxW) => { while (size > 10 && lines.some((l) => widthJ(l, f, size) > maxW)) size -= 1; return size; };
 
-const JA = {
+const JA_NOTE = {
   eyebrow: '// INSIGHTS',
   title: ['AIはなぜ、CIMの', '「一時的なコスト」を見過ごすのか'],
   pair: [
@@ -557,7 +557,20 @@ const JA = {
   url: 'ASKODIN.APP/INSIGHTS',
 };
 
-function noteEyecatch(W, H) {
+// English edition of the eyecatch, for an English-language note.com post
+// (YS, 2026-11-13: the piece goes to note.com in English, with these figures).
+const EN_NOTE = {
+  eyebrow: '// INSIGHTS',
+  title: ['Why AI copilots miss', 'recurring CIM add-backs'],
+  pair: [
+    { v: `US$${BRIDGE.marketed.toFixed(1)}M`, label: 'Adjusted EBITDA in the CIM', color: WHITE, op: 0.62 },
+    { v: `US$${BRIDGE.recast.toFixed(1)}M`, label: 'Survives the tests', color: GREEN_TEXT, op: 1 },
+  ],
+  foot: 'Illustrative composite · not a client run',
+  url: 'ASKODIN.APP/INSIGHTS',
+};
+
+function noteEyecatch(W, H, JA = JA_NOTE) {
   const el = backdrop(W, H);
   const L = 88;
   el.push(...wordmarkAt(L, 108, 34));
@@ -964,6 +977,9 @@ async function main() {
   console.log('\nnote.com (ja)');
   await emit(NOTE_BANNER_DIR, `askOdin-${SLUG}-note-ja`, 1280, 670,
     svgFor('askOdin — note.com eyecatch — CIM add-backs (JA)', 1280, 670, noteEyecatch(1280, 670)),
+    NOTE_SVG_DIR, [[1280, 670, ''], [1920, 1006, '-1920'], [2560, 1340, '-2x']]);
+  await emit(NOTE_BANNER_DIR, `askOdin-${SLUG}-note-en`, 1280, 670,
+    svgFor('askOdin — note.com eyecatch — CIM add-backs (EN)', 1280, 670, noteEyecatch(1280, 670, EN_NOTE)),
     NOTE_SVG_DIR, [[1280, 670, ''], [1920, 1006, '-1920'], [2560, 1340, '-2x']]);
 
   console.log(`\nWrote ${ASSET_DIR}/ and ${NOTE_DIR}/`);
