@@ -17,7 +17,7 @@ import path from 'path';
 //             Substack Notes; substack-note 1200x1200 (the persistence chart);
 //             and a LinkedIn document carousel PDF of the 4:5 set
 //   …-note-ja/ the note.com kit: eyecatch 1280x670 (+1920, +2x) in JA and EN,
-//              and figures/, a copy of the six in-article figures
+//              and figures/, the six in-article figures in Japanese
 //   figures/  six in-article figures, 1456 wide, for Substack and note.com,
 //             which have no table block and no columns
 //
@@ -33,9 +33,11 @@ import path from 'path';
 // check and what a copilot does with a footnote. None says askOdin reconciles a
 // ledger or sets a peg (askodin-coming-soon, 2026-09-24 scope ruling).
 //
-// Japanese: the eyecatch avoids 費 逃 落 抜, which the vendored Noto subset
-// lacks — 「一時的なコスト」「見過ごす」 instead of 一時費用 / 見逃す. No native
-// review (YS, 2026-10-04).
+// Japanese: the note.com post is Japanese, so its kit carries the eyecatch and
+// the six figures in Japanese (FIG_JA; the figure code takes a copy object, and
+// the English set is byte-identical to before that change). The figures' kanji
+// were added to tools/prepare-noto-sans-jp.py on 2026-11-13. No native review
+// (YS, 2026-10-04).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const F = {
@@ -528,7 +530,7 @@ const isJP = (ch) => {
   const c = ch.codePointAt(0);
   return (c >= 0x3000 && c <= 0x30ff) || (c >= 0x4e00 && c <= 0x9fff) || (c >= 0xff00 && c <= 0xffef);
 };
-const JP_FOR = new Map([[F.light, F.jpRegular], [F.mono, F.jpRegular], [F.med, F.jpMedium], [F.semi, F.jpMedium]]);
+const JP_FOR = new Map([[F.light, F.jpRegular], [F.mono, F.jpRegular], [F.serifIt, F.jpRegular], [F.med, F.jpMedium], [F.semi, F.jpMedium], [F.monoMed, F.jpMedium]]);
 function face(ch, f) {
   const g = isJP(ch) ? JP_FOR.get(f) : f;
   if (g.charToGlyphIndex(ch) === 0) throw new Error(`Glyph missing from the Noto subset — add to KANJI in tools/prepare-noto-sans-jp.py: ${ch}`);
@@ -613,61 +615,226 @@ const FR = FW - FM;
 const FIN = FR - FM;
 const FURL = 'ASKODIN.APP/INSIGHTS/AUDITING-CIM-ADD-BACKS';
 
+// Mixed-script text for the figures. Latin runs go through the kerned path
+// (identical to the English set); any string with kana or kanji is set glyph
+// by glyph, the Noto subset standing in for each Plex face (JP_FOR).
+const hasJP = (t) => [...t].some(isJP);
+const atM = (f, t, x, y, size, fill, op = 1) => (hasJP(t) ? runJ(t, x, y, f, size, fill, op) : at(f, t, x, y, size, fill, op));
+const widthM = (f, t, size) => (hasJP(t) ? widthJ(t, f, size) : width(f, t, size));
+const midM = (f, t, cx, y, size, fill, op = 1) => atM(f, t, cx - widthM(f, t, size) / 2, y, size, fill, op);
+const fitM = (f, lines, size, maxW) => { while (size > 10 && lines.some((l) => widthM(f, l, size) > maxW)) size -= 1; return size; };
+const trackedM = (f, t, x, y, size, track, fill, op = 1) => (hasJP(t) ? [runJ(t, x, y, f, size, fill, op, track)] : tracked(f, t, x, y, size, track, fill, op));
+const trackedWM = (f, t, size, track) => (hasJP(t) ? widthJ(t, f, size, track) : trackedW(f, t, size, track));
+const fitTrackedM = (f, t, size, ratio, maxW) => { while (size > 8 && trackedWM(f, t, size, size * ratio) > maxW) size -= 0.5; return size; };
+
+// Japanese wraps between characters, never inside a Latin run (US$2.5M stays
+// whole), never opening a line with closing punctuation, never ending one on
+// an opening bracket.
+const NO_START = '、。，．）」』】！？ー・：%ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ';
+const NO_END = '（「『【';
 function wrap(f, text, size, maxW) {
-  const words = text.split(' ');
+  // An explicit \n is a chosen break (Japanese copy places its own).
+  if (text.includes('\n')) return text.split('\n').flatMap((t) => wrap(f, t, size, maxW));
+  if (!hasJP(text)) {
+    const lines = [];
+    let cur = '';
+    for (const w of text.split(' ')) {
+      const t = cur ? `${cur} ${w}` : w;
+      if (widthM(f, t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  const tokens = text.match(/[\x21-\x7e]+|./gu);
   const lines = [];
   let cur = '';
-  for (const w of words) {
-    const t = cur ? `${cur} ${w}` : w;
-    if (width(f, t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+  for (const tok of tokens) {
+    const t = cur + tok;
+    if (widthM(f, t, size) <= maxW || !cur || NO_START.includes(tok[0])) { cur = t; continue; }
+    let carry = '';
+    while (cur && NO_END.includes(cur.at(-1))) { carry = cur.at(-1) + carry; cur = cur.slice(0, -1); }
+    lines.push(cur.trimEnd());
+    cur = (carry + tok).trimStart();
   }
   if (cur) lines.push(cur);
   return lines;
 }
 const para = (el, f, text, x, y, size, maxW, fill, op = 1, lead = 1.42) => {
   const lines = wrap(f, text, size, maxW);
-  lines.forEach((l, i) => el.push(at(f, l, x, y + i * size * lead, size, fill, op)));
+  lines.forEach((l, i) => el.push(atM(f, l, x, y + i * size * lead, size, fill, op)));
   return y + (lines.length - 1) * size * lead;
 };
 const box = (x, y, w, h, stroke, op = 1, extra = '') =>
   `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6" fill="#1A1A2E" stroke="${stroke}" stroke-opacity="${op}" stroke-width="2" ${extra}/>`;
+
+// ── Figure copy, one object per language ────────────────────────────────────
+// Numbers come from BRIDGE / PERSISTENCE / DPO, never retyped. The Japanese
+// edition is for note.com (YS, 2026-11-13); severity tiers and pillar names
+// follow the Japanese site (致命的・重大・軽微, キルショット, 事業物理法則,
+// ディール構造) and the verdict stays DO NOT PROCEED, as on /ja/. Mono
+// eyebrows stay English, as in every note-ja figure set. No native review.
+const m = (v) => `$${v.toFixed(1)}M`;
+const usd = (v) => `US$${v.toFixed(1)}M`;
+const SHORTFALL = 4.1;
+// Notes and the copilot quote are Plex Serif Italic in English. Japanese has
+// no italic, and italic Latin inside a Japanese line reads as a mistake, so the
+// Japanese edition sets them upright.
+const noteFace = (C) => (C.lang === 'ja' ? F.light : F.serifIt);
+
+const FIG_EN = {
+  lang: 'en',
+  illustrative: ILLUSTRATIVE,
+  fault: {
+    title: 'Where the narrative meets the numbers',
+    cols: [
+      { label: 'SELL-SIDE CIM · NARRATIVE', items: [`“${usd(BRIDGE.marketed)} Adjusted EBITDA (28% margin)”`, '“Fully normalized, historical cash flow”'] },
+      { label: 'SUPPORTING EXHIBITS · NUMBERS', items: ['Recurring operating expense labeled one-off', 'Working capital stretched ahead of the auction'] },
+    ],
+  },
+  persistence: {
+    title: 'One cost, four labels',
+    note: 'The expense the CIM calls non-recurring, by fiscal year, in US$ millions. Only FY25 is presented as one-time.',
+    labels: PERSISTENCE.map((r) => (r.hot ? `${r.label} (add-back #3)` : r.label)),
+    fmt: m,
+  },
+  dpo: {
+    title: 'Payables stretched ahead of the auction',
+    note: 'Days payable outstanding. The 26-day stretch shows up as record cash conversion in the deck.',
+    labels: DPO.map((r) => r.label),
+    fmt: (v) => `${v} days`,
+  },
+  modules: {
+    title: 'One standard, pluggable modules',
+    note: 'The standard does not change between asset types. Each module brings the extraction rules and tests for its own documents.',
+    standard: 'THE STANDARD',
+    parts: ['5 pillars · 3 audit checks', 'JUDGE: Critical · Major · Minor', 'Defensible Audit Log'],
+    module: 'MODULE',
+    mods: [
+      { name: ['Pitch decks and', 'investment memos'], tests: ['Claims against the model', 'Structural archetype match', 'Funding and runway physics'] },
+      { name: ['CIM evaluation'], tests: ['Persistence test (add-backs)', 'Working capital trend test', 'Contract-compatibility test'] },
+      { name: ['Next document type'], tests: ['Same standard, same record,', 'new extraction rules.'] },
+    ],
+  },
+  output: {
+    title: 'The same disclosures, read two ways',
+    copilotLabel: 'WHAT CONVERSATIONAL AI REPORTS',
+    copilot: `“The target company demonstrates strong 28% Adjusted EBITDA margins with US$${(BRIDGE.marketed - BRIDGE.reported).toFixed(1)}M in defensible adjustments, primarily related to non-recurring ERP upgrades and facility rationalization.”`,
+    copilotVerdict: '[VERDICT: NARRATIVE SMOOTHING]',
+    compilerLabel: 'WHAT A DETERMINISTIC COMPILER SURFACES',
+    findings: [
+      { tag: '[CRITICAL · KILL SHOT · PILLAR 4: BUSINESS MODEL PHYSICS]', body: `Synergy (${usd(BRIDGE.synergy)} facility consolidation) conflicts with same-day SLAs covering 40% of regional enterprise revenue. Synergy disallowed.` },
+      { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: `Add-back #3 (${usd(BRIDGE.erp)} ERP upgrade) recurs across 4 consecutive fiscal years (${PERSISTENCE.map((r) => `${r.label.slice(0, 4)}: ${m(r.value)}`).join(', ')}). Reclassified as recurring OpEx.` },
+      { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: `Accounts payable stretched 26 days against the 36-month baseline. Estimated post-close cash shortfall against the proposed peg: ${usd(SHORTFALL)}.` },
+    ],
+    recast: `Recast Adjusted EBITDA: ${usd(BRIDGE.recast)} (−${PCT}.0%)`,
+    verdict: '[VERDICT: DO NOT PROCEED]',
+  },
+  pipelines: {
+    title: 'Same documents, two architectures',
+    rows: [
+      { label: 'CONVERSATIONAL COPILOT', out: 'NARRATIVE SMOOTHING',
+        steps: [['Read', 'CIM and footnotes as one text corpus'], ['Summarize', 'Weighs how plausible the explanation sounds'], ['Memo', 'Fluent prose, no trace to the schedules']] },
+      { label: 'DETERMINISTIC COMPILER', out: 'FINDING RAISED',
+        steps: [['Extract', 'Each add-back becomes a discrete claim'], ['Evaluate', 'Deterministic tests against the multi-year exhibits'], ['Record', 'Findings tiered and traceable to their source']] },
+    ],
+  },
+};
+
+const FY_JA = ['「システムコンサルティング」', '「デジタルトランスフォーメーション」', '「ERPアップグレード」', '「ERP最適化」'];
+const FIG_JA = {
+  lang: 'ja',
+  illustrative: '説明用の合成データ・実際の案件ではありません',
+  fault: {
+    title: 'ナラティブと数字が衝突する場所',
+    cols: [
+      { label: 'セルサイドCIM・ナラティブ', items: [`「調整後EBITDA ${usd(BRIDGE.marketed)}\n（利益率28%）」`, '「完全に正常化された、\n実績ベースのキャッシュフロー」'] },
+      { label: '添付資料・数字', items: ['毎年発生している営業費用に\n「一時的」のラベル', '入札の前に引き延ばされた運転資本'] },
+    ],
+  },
+  persistence: {
+    title: '一つのコスト、四つのラベル',
+    note: 'CIMが「非経常」とする費用の年度別推移（単位：百万米ドル）。\n一時的なものとして示されているのはFY25だけ。',
+    labels: PERSISTENCE.map((r, i) => `${r.label.slice(0, 4)}・${FY_JA[i]}${r.hot ? '（アドバック#3）' : ''}`),
+    fmt: m,
+  },
+  dpo: {
+    title: '入札の前に引き延ばされた買掛金',
+    note: '買掛金回転日数（DPO）。26日の引き延ばしが、資料では過去最高のキャッシュ転換率として表れる。',
+    labels: ['過去36カ月の基準値', '売却直前の数カ月'],
+    fmt: (v) => `${v}日`,
+  },
+  modules: {
+    title: '一つの標準、差し替え可能なモジュール',
+    note: '標準は資産クラスが変わっても変わらない。\n各モジュールが、その文書に固有の抽出ルールとテストを持ち込む。',
+    standard: '標準',
+    parts: ['5つの柱・3つの監査チェック', 'JUDGE：致命的・重大・軽微', 'Defensible Audit Log'],
+    module: 'モジュール',
+    mods: [
+      { name: ['ピッチデッキと', '投資メモ'], tests: ['主張とモデルの照合', '構造アーキタイプの照合', '資金調達とランウェイの物理'] },
+      { name: ['CIM評価'], tests: ['持続性テスト（アドバック）', '運転資本のトレンドテスト', '契約との整合性テスト'] },
+      { name: ['次の文書タイプ'], tests: ['同じ標準、同じ記録、', '新しい抽出ルール。'] },
+    ],
+  },
+  output: {
+    title: '同じ開示を、二通りに読む',
+    copilotLabel: '会話型AIの報告',
+    copilot: `「対象企業は28%という高い調整後EBITDAマージンを示しており、\n${usd(BRIDGE.marketed - BRIDGE.reported)}の調整は妥当である。\n主な内訳は、非経常的なERPアップグレードと拠点統合である。」`,
+    copilotVerdict: '[判定：ナラティブの平滑化]',
+    compilerLabel: '決定論的コンパイラが示すもの',
+    findings: [
+      { tag: '[致命的・キルショット・柱4：事業物理法則]', body: `拠点統合によるシナジー（${usd(BRIDGE.synergy)}）は、地域の法人売上の40%を占める当日対応SLAと両立しない。\nシナジーは認めない。` },
+      { tag: '[重大・柱5：ディール構造]', body: `アドバック#3（ERPアップグレード、${usd(BRIDGE.erp)}）は4会計年度連続で発生している（${PERSISTENCE.map((r) => `${r.label.slice(0, 4)}：${m(r.value)}`).join('、')}）。経常的な営業費用に再分類。` },
+      { tag: '[重大・柱5：ディール構造]', body: `買掛金は過去36カ月の基準値に対して26日引き延ばされている。\n提示されたペッグに対する、クロージング後の資金不足は推定${usd(SHORTFALL)}。` },
+    ],
+    recast: `再計算後の調整後EBITDA：${usd(BRIDGE.recast)}（−${PCT}.0%）`,
+    verdict: '[判定：DO NOT PROCEED]',
+  },
+  pipelines: {
+    title: '同じ文書、二つのアーキテクチャ',
+    rows: [
+      { label: '会話型コパイロット', out: 'ナラティブの平滑化',
+        steps: [['読む', 'CIMと脚注を\n一つのテキストとして読む'], ['要約', '説明のもっともらしさで\n重み付け'], ['メモ', '流暢な文章。\nスケジュールへの追跡はない']] },
+      { label: '決定論的コンパイラ', out: '指摘事項を提起',
+        steps: [['抽出', '各アドバックを\n個別の主張に分解'], ['評価', '複数年の添付資料に対する\n決定論的テスト'], ['記録', '指摘は重要度別に分類され、\n出典まで追跡可能']] },
+    ],
+  },
+};
 
 function figureHead(eyebrow, title) {
   const el = [];
   el.push(...wordmarkAt(FM, 104, 28));
   el.push(...tracked(F.mono, 'ASKODIN.APP', FR - trackedW(F.mono, 'ASKODIN.APP', 14, 3.6), 100, 14, 3.6, WHITE, 0.4));
   el.push(...tracked(F.monoMed, eyebrow, FM, 196, 16, 4, ORANGE_TEXT, 1));
-  const tSize = fit(F.light, [title], 54, FIN);
-  el.push(at(F.light, title, FM, 266, tSize, WHITE, 0.96));
+  const tSize = fitM(F.light, [title], hasJP(title) ? 50 : 54, FIN);
+  el.push(atM(F.light, title, FM, 266, tSize, WHITE, 0.96));
   return { el, y: 266 };
 }
-function figureFoot(y, note = ILLUSTRATIVE) {
+function figureFoot(y, note) {
   const el = [hair(FM, FR, y)];
   const text = note ? `${note} · ${FURL}` : FURL;
-  const size = fitTracked(F.mono, text, 14, 0.18, FIN);
-  el.push(...tracked(F.mono, text, FM, y + 52, size, size * 0.18, WHITE, 0.4));
+  const size = fitTrackedM(F.mono, text, 14, 0.18, FIN);
+  el.push(...trackedM(F.mono, text, FM, y + 52, size, size * 0.18, WHITE, 0.4));
   return { el, h: y + 96 };
 }
 const figureSvg = (title, h, body) =>
   svgFor(`${title} — askOdin`, FW, h, [`<rect width="${FW}" height="${h}" fill="${DARK}"/>`, `<rect width="${FW}" height="6" fill="${ORANGE}"/>`, ...body]);
 
 // Figure — the fault lines: what the CIM says against what the exhibits show.
-function faultLinesFigure() {
-  const { el, y: y0 } = figureHead('// THE ANATOMY OF THE COLLISION', 'Where the narrative meets the numbers');
-  let y = y0 + 70;
+function faultLinesFigure(C) {
+  const { el, y: y0 } = figureHead('// THE ANATOMY OF THE COLLISION', C.fault.title);
+  const y = y0 + 70;
   const colW = (FIN - 40) / 2;
-  const cols = [
-    { x: FM, label: 'SELL-SIDE CIM · NARRATIVE', color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2,
-      items: ['“US$25.0M Adjusted EBITDA (28% margin)”', '“Fully normalized, historical cash flow”'] },
-    { x: FM + colW + 40, label: 'SUPPORTING EXHIBITS · NUMBERS', color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.6,
-      items: ['Recurring operating expense labeled one-off', 'Working capital stretched ahead of the auction'] },
+  const style = [
+    { x: FM, color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2 },
+    { x: FM + colW + 40, color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.6 },
   ];
+  const cols = C.fault.cols.map((c, i) => ({ ...c, ...style[i] }));
   const size = 30;
   const heights = cols.map((c) => c.items.reduce((h, t) => h + wrap(F.light, t, size, colW - 64).length * size * 1.4 + 28, 0));
   const bh = 70 + Math.max(...heights) + 20;
   cols.forEach((c) => {
     el.push(box(c.x, y, colW, bh, c.stroke, c.sop));
-    el.push(...tracked(F.mono, c.label, c.x + 32, y + 52, 15, 3, c.color, c.op));
+    el.push(...trackedM(F.mono, c.label, c.x + 32, y + 52, 15, 3, c.color, c.op));
     let ty = y + 112;
     c.items.forEach((t) => { ty = para(el, F.light, t, c.x + 32, ty, size, colW - 64, WHITE, 0.92, 1.4) + size * 1.4 + 28; });
   });
@@ -676,45 +843,43 @@ function faultLinesFigure() {
 }
 
 // Figure — horizontal bars, value at right, hot row in orange.
-function barsFigure(eyebrow, title, note, rows, max, fmt) {
-  const { el, y: y0 } = figureHead(eyebrow, title);
+function barsFigure(C, eyebrow, copy, rows, max) {
+  const { el, y: y0 } = figureHead(eyebrow, copy.title);
   let y = y0 + 64;
-  y = para(el, F.serifIt, note, FM, y, 26, FIN, WHITE, 0.66) + 96;
+  y = para(el, noteFace(C), copy.note, FM, y, 26, FIN, WHITE, 0.66) + 96;
   const barH = 20;
-  rows.forEach((r) => {
-    el.push(at(F.med, r.label, FM, y, 30, WHITE, r.hot ? 0.96 : 0.82));
-    const v = fmt(r.value);
-    el.push(at(F.monoMed, v, FR - width(F.monoMed, v, 30), y, 30, r.hot ? ORANGE_TEXT : WHITE, r.hot ? 1 : 0.72));
+  rows.forEach((r, i) => {
+    const v = copy.fmt(r.value);
+    const vw = widthM(F.monoMed, v, 30);
+    const lSize = fitM(F.med, [copy.labels[i]], 30, FIN - vw - 40);
+    el.push(atM(F.med, copy.labels[i], FM, y, lSize, WHITE, r.hot ? 0.96 : 0.82));
+    el.push(atM(F.monoMed, v, FR - vw, y, 30, r.hot ? ORANGE_TEXT : WHITE, r.hot ? 1 : 0.72));
     el.push(`<rect x="${FM}" y="${y + 20}" width="${FIN}" height="${barH}" fill="${WHITE}" opacity="0.05"/>`);
     el.push(`<rect x="${FM}" y="${y + 20}" width="${(FIN * r.value / max).toFixed(1)}" height="${barH}" fill="${r.hot ? ORANGE : WHITE}" opacity="${r.hot ? 1 : 0.3}"/>`);
     y += 104;
   });
-  const foot = figureFoot(y - 104 + 20 + barH + 64);
+  const foot = figureFoot(y - 104 + 20 + barH + 64, C.illustrative);
   return { h: foot.h, svg: [...el, ...foot.el] };
 }
-const persistenceFigure = () => barsFigure('// THE PERSISTENCE TEST', 'One cost, four labels',
-  'The expense the CIM calls non-recurring, by fiscal year, in US$ millions. Only FY25 is presented as one-time.',
-  PERSISTENCE.map((r) => (r.hot ? { ...r, label: `${r.label} (add-back #3)` } : r)), 1.6, (v) => `$${v.toFixed(1)}M`);
-const dpoFigure = () => barsFigure('// THE PEG SQUEEZE', 'Payables stretched ahead of the auction',
-  'Days payable outstanding. The 26-day stretch shows up as record cash conversion in the deck.',
-  DPO, 75, (v) => `${v} days`);
+const persistenceFigure = (C) => barsFigure(C, '// THE PERSISTENCE TEST', C.persistence, PERSISTENCE, 1.6);
+const dpoFigure = (C) => barsFigure(C, '// THE PEG SQUEEZE', C.dpo, DPO, 75);
 
 // Figure — one standard, pluggable modules.
-function modulesFigure() {
-  const { el, y: y0 } = figureHead('// EXTENSIBLE JUDGMENT', 'One standard, pluggable modules');
+function modulesFigure(C) {
+  const M = C.modules;
+  const { el, y: y0 } = figureHead('// EXTENSIBLE JUDGMENT', M.title);
   let y = y0 + 64;
-  y = para(el, F.serifIt, 'The standard does not change between asset types. Each module brings the extraction rules and tests for its own documents.', FM, y, 26, FIN, WHITE, 0.66) + 56;
+  y = para(el, noteFace(C), M.note, FM, y, 26, FIN, WHITE, 0.66) + 56;
 
   const sh = 176;
   el.push(box(FM, y, FIN, sh, ORANGE, 0.7));
-  el.push(...tracked(F.mono, 'THE STANDARD', FM + 32, y + 52, 15, 3.4, ORANGE_TEXT, 1));
-  const parts = ['5 pillars · 3 audit checks', 'JUDGE: Critical · Major · Minor', 'Defensible Audit Log'];
+  el.push(...trackedM(F.mono, M.standard, FM + 32, y + 52, 15, 3.4, ORANGE_TEXT, 1));
   const pw = (FIN - 64 - 2 * 20) / 3;
-  const pSize = fit(F.med, parts, 26, pw - 40);
-  parts.forEach((p, i) => {
+  const pSize = fitM(F.med, M.parts, 26, pw - 40);
+  M.parts.forEach((p, i) => {
     const px = FM + 32 + i * (pw + 20);
     el.push(box(px, y + 80, pw, 64, WHITE, 0.15));
-    el.push(mid(F.med, p, px + pw / 2, y + 122, pSize, WHITE, 0.92));
+    el.push(midM(F.med, p, px + pw / 2, y + 122, pSize, WHITE, 0.92));
   });
   y += sh;
   // Drawn, not typeset: Plex Mono has no U+25B2.
@@ -724,95 +889,90 @@ function modulesFigure() {
   });
   y += 84;
 
-  const mods = [
-    { name: ['Pitch decks and', 'investment memos'], tests: ['Claims against the model', 'Structural archetype match', 'Funding and runway physics'], stroke: WHITE, sop: 0.2, color: WHITE },
-    { name: ['CIM evaluation'], tests: ['Persistence test (add-backs)', 'Working capital trend test', 'Contract-compatibility test'], stroke: ORANGE, sop: 0.8, color: ORANGE_TEXT },
-    { name: ['Next document type'], tests: ['Same standard, same record,', 'new extraction rules.'], stroke: WHITE, sop: 0.25, color: WHITE, op: 0.5, dashed: true },
+  const style = [
+    { stroke: WHITE, sop: 0.2, color: WHITE },
+    { stroke: ORANGE, sop: 0.8, color: ORANGE_TEXT },
+    { stroke: WHITE, sop: 0.25, color: WHITE, op: 0.5, dashed: true },
   ];
+  const mods = M.mods.map((mod, i) => ({ ...mod, ...style[i] }));
   const mw = (FIN - 2 * 24) / 3;
   const mh = 340;
-  const tSize = fit(F.light, mods.flatMap((m) => m.tests.map((t) => `· ${t}`)), 24, mw - 56);
-  mods.forEach((m, i) => {
+  const tSize = fitM(F.light, mods.flatMap((x) => x.tests.map((t) => `· ${t}`)), 24, mw - 56);
+  mods.forEach((x, i) => {
     const mx = FM + i * (mw + 24);
-    el.push(box(mx, y, mw, mh, m.stroke, m.sop, m.dashed ? 'stroke-dasharray="10 8" fill-opacity="0"' : ''));
-    el.push(...tracked(F.mono, 'MODULE', mx + 28, y + 48, 13, 3, WHITE, 0.45));
-    m.name.forEach((n, j) => el.push(at(F.med, n, mx + 28, y + 96 + j * 36, 28, m.color, m.op ?? 1)));
-    const ty = y + 96 + m.name.length * 36 + 40;
-    m.tests.forEach((t, j) => el.push(at(F.light, m.dashed ? t : `· ${t}`, mx + 28, ty + j * tSize * 1.6, tSize, WHITE, m.dashed ? 0.5 : 0.8)));
+    el.push(box(mx, y, mw, mh, x.stroke, x.sop, x.dashed ? 'stroke-dasharray="10 8" fill-opacity="0"' : ''));
+    el.push(...trackedM(F.mono, M.module, mx + 28, y + 48, 13, 3, WHITE, 0.45));
+    x.name.forEach((n, j) => el.push(atM(F.med, n, mx + 28, y + 96 + j * 36, 28, x.color, x.op ?? 1)));
+    const ty = y + 96 + x.name.length * 36 + 40;
+    x.tests.forEach((t, j) => el.push(atM(F.light, x.dashed ? t : `· ${t}`, mx + 28, ty + j * tSize * 1.6, tSize, WHITE, x.dashed ? 0.5 : 0.8)));
   });
   const foot = figureFoot(y + mh + 64, null);
   return { h: foot.h, svg: [...el, ...foot.el] };
 }
 
 // Figure — the side-by-side output, stacked: copilot, then compiler.
-function outputFigure() {
-  const { el, y: y0 } = figureHead('// PERSUASION VS. PHYSICS', 'The same disclosures, read two ways');
+function outputFigure(C) {
+  const O = C.output;
+  const { el, y: y0 } = figureHead('// PERSUASION VS. PHYSICS', O.title);
   let y = y0 + 64;
   const size = 28;
   const inW = FIN - 72;
 
   // Copilot block
-  const copilot = '“The target company demonstrates strong 28% Adjusted EBITDA margins with US$6.6M in defensible adjustments, primarily related to non-recurring ERP upgrades and facility rationalization.”';
-  const cLines = wrap(F.serifIt, copilot, size, inW).length;
+  const cLines = wrap(noteFace(C), O.copilot, size, inW).length;
   const ch = 84 + cLines * size * 1.45 + 70;
   el.push(box(FM, y, FIN, ch, WHITE, 0.2));
-  el.push(...tracked(F.mono, 'WHAT CONVERSATIONAL AI REPORTS', FM + 36, y + 52, 15, 3, WHITE, 0.55));
-  para(el, F.serifIt, copilot, FM + 36, y + 108, size, inW, WHITE, 0.9, 1.45);
-  el.push(...tracked(F.monoMed, '[VERDICT: NARRATIVE SMOOTHING]', FM + 36, y + ch - 32, 16, 2.4, WHITE, 0.55));
+  el.push(...trackedM(F.mono, O.copilotLabel, FM + 36, y + 52, 15, 3, WHITE, 0.55));
+  para(el, noteFace(C), O.copilot, FM + 36, y + 108, size, inW, WHITE, 0.9, 1.45);
+  el.push(...trackedM(F.monoMed, O.copilotVerdict, FM + 36, y + ch - 32, 16, 2.4, WHITE, 0.55));
   y += ch + 36;
 
   // Compiler block
-  const findings = [
-    { tag: '[CRITICAL · KILL SHOT · PILLAR 4: BUSINESS MODEL PHYSICS]', body: 'Synergy (US$2.5M facility consolidation) conflicts with same-day SLAs covering 40% of regional enterprise revenue. Synergy disallowed.' },
-    { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: 'Add-back #3 (US$1.5M ERP upgrade) recurs across 4 consecutive fiscal years (FY22: $1.2M, FY23: $1.4M, FY24: $1.5M, FY25: $1.5M). Reclassified as recurring OpEx.' },
-    { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: 'Accounts payable stretched 26 days against the 36-month baseline. Estimated post-close cash shortfall against the proposed peg: US$4.1M.' },
-  ];
   const bodySize = 26;
-  const fh = findings.reduce((h, f) => h + 36 + wrap(F.light, f.body, bodySize, inW).length * bodySize * 1.45 + 34, 0);
+  const fh = O.findings.reduce((h, f) => h + 36 + wrap(F.light, f.body, bodySize, inW).length * bodySize * 1.45 + 34, 0);
   const kh = 84 + fh + 60 + 84;
   el.push(box(FM, y, FIN, kh, ORANGE, 0.7));
-  el.push(...tracked(F.mono, 'WHAT A DETERMINISTIC COMPILER SURFACES', FM + 36, y + 52, 15, 3, ORANGE_TEXT, 1));
+  el.push(...trackedM(F.mono, O.compilerLabel, FM + 36, y + 52, 15, 3, ORANGE_TEXT, 1));
   let ty = y + 112;
-  findings.forEach((f) => {
-    const tagSize = fitTracked(F.monoMed, f.tag, 17, 0.08, inW);
-    el.push(...tracked(F.monoMed, f.tag, FM + 36, ty, tagSize, tagSize * 0.08, ORANGE_TEXT, 1));
+  O.findings.forEach((f) => {
+    const tagSize = fitTrackedM(F.monoMed, f.tag, 17, 0.08, inW);
+    el.push(...trackedM(F.monoMed, f.tag, FM + 36, ty, tagSize, tagSize * 0.08, ORANGE_TEXT, 1));
     ty = para(el, F.light, f.body, FM + 36, ty + 44, bodySize, inW, WHITE, 0.92, 1.45) + bodySize * 1.45 + 30;
   });
-  el.push(at(F.med, `Recast Adjusted EBITDA: US$${BRIDGE.recast.toFixed(1)}M (−${PCT}.0%)`, FM + 36, ty + 6, 28, GREEN_TEXT));
-  el.push(...tracked(F.monoMed, '[VERDICT: DO NOT PROCEED]', FM + 36, ty + 66, 17, 2.4, ORANGE_TEXT, 1));
+  el.push(atM(F.med, O.recast, FM + 36, ty + 6, 28, GREEN_TEXT));
+  el.push(...trackedM(F.monoMed, O.verdict, FM + 36, ty + 66, 17, 2.4, ORANGE_TEXT, 1));
   y += kh;
 
-  const foot = figureFoot(y + 64);
+  const foot = figureFoot(y + 64, C.illustrative);
   return { h: foot.h, svg: [...el, ...foot.el] };
 }
 
 // Figure — same documents, two architectures.
-function pipelinesFigure() {
-  const { el, y: y0 } = figureHead('// WHY COPILOTS MISS IT', 'Same documents, two architectures');
+function pipelinesFigure(C) {
+  const { el, y: y0 } = figureHead('// WHY COPILOTS MISS IT', C.pipelines.title);
   let y = y0 + 80;
-  const rows = [
-    { label: 'CONVERSATIONAL COPILOT', color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2, out: 'NARRATIVE SMOOTHING',
-      steps: [['Read', 'CIM and footnotes as one text corpus'], ['Summarize', 'Weighs how plausible the explanation sounds'], ['Memo', 'Fluent prose, no trace to the schedules']] },
-    { label: 'DETERMINISTIC COMPILER', color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.7, out: 'FINDING RAISED',
-      steps: [['Extract', 'Each add-back becomes a discrete claim'], ['Evaluate', 'Deterministic tests against the multi-year exhibits'], ['Record', 'Findings tiered and traceable to their source']] },
+  const style = [
+    { color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2 },
+    { color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.7 },
   ];
+  const rows = C.pipelines.rows.map((r, i) => ({ ...r, ...style[i] }));
   const gap = 56;
   const sw = (FIN - 2 * gap) / 3;
   const bSize = 23;
   const bh = 64 + Math.max(...rows.flatMap((r) => r.steps.map(([, b]) => wrap(F.light, b, bSize, sw - 48).length))) * bSize * 1.42 + 30;
   rows.forEach((r) => {
-    el.push(...tracked(F.mono, r.label, FM, y, 15, 3.4, r.color, r.op));
+    el.push(...trackedM(F.mono, r.label, FM, y, 15, 3.4, r.color, r.op));
     y += 30;
     r.steps.forEach(([t, b], i) => {
       const x = FM + i * (sw + gap);
       el.push(box(x, y, sw, bh, r.stroke, r.sop));
-      el.push(at(F.med, t, x + 24, y + 48, 28, WHITE, 0.96));
+      el.push(atM(F.med, t, x + 24, y + 48, 28, WHITE, 0.96));
       para(el, F.light, b, x + 24, y + 48 + 44, bSize, sw - 48, WHITE, 0.78, 1.42);
       if (i < 2) el.push(mid(F.mono, '→', x + sw + gap / 2, y + bh / 2 + 10, 28, WHITE, 0.45));
     });
     y += bh + 20;
     el.push(`<rect x="${FM}" y="${y}" width="${FIN}" height="54" rx="6" fill="${r.stroke === ORANGE ? ORANGE : WHITE}" fill-opacity="${r.stroke === ORANGE ? 0.15 : 0.06}"/>`);
-    el.push(...tracked(F.monoMed, `↳ ${r.out}`, FM + 24, y + 35, 16, 3, r.color, r.op));
+    el.push(...trackedM(F.monoMed, `↳ ${r.out}`, FM + 24, y + 35, 16, 3, r.color, r.op));
     y += 54 + 72;
   });
   const foot = figureFoot(y - 8, null);
@@ -970,7 +1130,7 @@ async function main() {
   const FIG_DIR = path.join(ASSET_DIR, 'figures');
   fs.mkdirSync(FIG_DIR, { recursive: true });
   for (const f of FIGURES) {
-    const { h, svg } = f.make();
+    const { h, svg } = f.make(FIG_EN);
     const H = Math.round(h);
     await emit(FIG_DIR, `askOdin-${SLUG}-${f.id}`, FW, H, figureSvg(f.title, H, svg));
   }
@@ -983,15 +1143,15 @@ async function main() {
     svgFor('askOdin — note.com eyecatch — CIM add-backs (EN)', 1280, 670, noteEyecatch(1280, 670, EN_NOTE)),
     NOTE_SVG_DIR, [[1280, 670, ''], [1920, 1006, '-1920'], [2560, 1340, '-2x']]);
 
-  // The note.com folder is the complete kit for that post: the same six body
-  // figures as Substack, copied beside the eyecatch so nothing is fetched from
-  // a second folder at posting time.
-  console.log('\nnote.com figures/  (same six as Substack)');
+  // The note.com post is Japanese, so its body figures are the Japanese
+  // edition of the same six (YS, 2026-11-13), beside the eyecatch.
+  console.log('\nnote.com figures/  (Japanese edition of the six)');
   const NOTE_FIG_DIR = path.join(NOTE_DIR, 'figures');
   fs.mkdirSync(NOTE_FIG_DIR, { recursive: true });
-  for (const f of fs.readdirSync(FIG_DIR).filter((n) => n.endsWith('.png'))) {
-    fs.copyFileSync(path.join(FIG_DIR, f), path.join(NOTE_FIG_DIR, f));
-    console.log(`  ${f}`);
+  for (const f of FIGURES) {
+    const { h, svg } = f.make(FIG_JA);
+    const H = Math.round(h);
+    await emit(NOTE_FIG_DIR, `askOdin-${SLUG}-ja-${f.id}`, FW, H, figureSvg(f.title, H, svg), NOTE_SVG_DIR);
   }
 
   console.log(`\nWrote ${ASSET_DIR}/ and ${NOTE_DIR}/`);

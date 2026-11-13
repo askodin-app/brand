@@ -83,6 +83,9 @@ KANJI = (
     # Japanese OG cards for the tools comparison, the layer-beneath-agents essay
     # and the brittle-assumption framework (generate-ja-og-cards.mjs), 2026-11-04.
     "索層崩倒"
+    # Japanese edition of the six in-article figures for "The CIM Add-Back
+    # Trap" on note.com (generate-auditing-cim-add-backs.mjs), 2026-11-13.
+    "万占却四売妥常延掛新替札滑百章続績衝訳費転連運"
 )
 
 def charset() -> str:
