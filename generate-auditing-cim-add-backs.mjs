@@ -16,7 +16,8 @@ import path from 'path';
 //   cards/    one claim per card, 4:5 and 1:1, for the X thread, LinkedIn and
 //             Substack Notes; substack-note 1200x1200 (the persistence chart);
 //             and a LinkedIn document carousel PDF of the 4:5 set
-//   …-note-ja/ the note.com eyecatch 1280x670 (+1920, +2x), Japanese
+//   …-note-ja/ the note.com kit: eyecatch 1280x670 (+1920, +2x) in JA and EN,
+//              and figures/, a copy of the six in-article figures
 //   figures/  six in-article figures, 1456 wide, for Substack and note.com,
 //             which have no table block and no columns
 //
@@ -981,6 +982,17 @@ async function main() {
   await emit(NOTE_BANNER_DIR, `askOdin-${SLUG}-note-en`, 1280, 670,
     svgFor('askOdin — note.com eyecatch — CIM add-backs (EN)', 1280, 670, noteEyecatch(1280, 670, EN_NOTE)),
     NOTE_SVG_DIR, [[1280, 670, ''], [1920, 1006, '-1920'], [2560, 1340, '-2x']]);
+
+  // The note.com folder is the complete kit for that post: the same six body
+  // figures as Substack, copied beside the eyecatch so nothing is fetched from
+  // a second folder at posting time.
+  console.log('\nnote.com figures/  (same six as Substack)');
+  const NOTE_FIG_DIR = path.join(NOTE_DIR, 'figures');
+  fs.mkdirSync(NOTE_FIG_DIR, { recursive: true });
+  for (const f of fs.readdirSync(FIG_DIR).filter((n) => n.endsWith('.png'))) {
+    fs.copyFileSync(path.join(FIG_DIR, f), path.join(NOTE_FIG_DIR, f));
+    console.log(`  ${f}`);
+  }
 
   console.log(`\nWrote ${ASSET_DIR}/ and ${NOTE_DIR}/`);
 }
