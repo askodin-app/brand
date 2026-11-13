@@ -73,6 +73,7 @@ const STAGES = {
     ['generate-sounding-thorough-vs-being-thorough.mjs', 'social/20261103-sounding-thorough-vs-being-thorough/ — site OG + hero, Substack hero + share, X / LinkedIn crops'],
     ['generate-sounding-thorough-vs-being-thorough-ja.mjs', 'social/20261103-sounding-thorough-vs-being-thorough-ja/ — Japanese site OG + hero, X / LinkedIn crops, note.com eyecatch'],
     ['generate-ai-data-retention-fork.mjs', 'social/20260821-ai-data-retention-fork/ + -ja/ + -note-ja/ — Substack hero, X / LinkedIn crops, note.com eyecatch'],
+    ['generate-auditing-cim-add-backs.mjs', 'social/20261113-auditing-cim-add-backs/ + -note-ja/ — Substack hero + share + Note, X / LinkedIn crops, 9 cards, LinkedIn carousel PDF (needs Chrome), note.com eyecatch'],
     ['generate-ja-og-cards.mjs', 'og/ja* — one OG card per Japanese page'],
     ['generate-oppo-lockscreen.mjs',        'wallpaper/ — OPPO Pad lock screen, 2800x2000'],
     ['generate-exec-brief-ja.mjs',            'decks/ — 2pp A4 landscape JA executive brief; needs Chrome for the PDFs'],
