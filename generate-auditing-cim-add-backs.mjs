@@ -17,6 +17,8 @@ import path from 'path';
 //             Substack Notes; substack-note 1200x1200 (the persistence chart);
 //             and a LinkedIn document carousel PDF of the 4:5 set
 //   …-note-ja/ the note.com eyecatch 1280x670 (+1920, +2x), Japanese
+//   figures/  six in-article figures, 1456 wide, for Substack and note.com,
+//             which have no table block and no columns
 //
 // ── Copy provenance ──────────────────────────────────────────────────────────
 // Every figure is the article's ILLUSTRATIVE COMPOSITE, not a client run, and
@@ -581,6 +583,238 @@ function noteEyecatch(W, H) {
 }
 
 // ---------------------------------------------------------------------------
+// In-article figures — for Substack and note.com, which have no table block
+// and no columns. Every HTML element in the article that would not survive a
+// paste becomes one of these: the fault-lines panel, the two bar charts, the
+// modules diagram, the side-by-side output (stacked, so it reads on a phone)
+// and the two pipelines. The IC checklist stays as text: a numbered list
+// pastes cleanly and readers copy it.
+//
+// 1456 wide = Substack's 728px column at 2x; body type at 28–30px lands near
+// 15px on desktop. Each figure lays out top-down and returns its own height.
+// ---------------------------------------------------------------------------
+const FW = 1456;
+const FM = 96;
+const FR = FW - FM;
+const FIN = FR - FM;
+const FURL = 'ASKODIN.APP/INSIGHTS/AUDITING-CIM-ADD-BACKS';
+
+function wrap(f, text, size, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? `${cur} ${w}` : w;
+    if (width(f, t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+const para = (el, f, text, x, y, size, maxW, fill, op = 1, lead = 1.42) => {
+  const lines = wrap(f, text, size, maxW);
+  lines.forEach((l, i) => el.push(at(f, l, x, y + i * size * lead, size, fill, op)));
+  return y + (lines.length - 1) * size * lead;
+};
+const box = (x, y, w, h, stroke, op = 1, extra = '') =>
+  `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6" fill="#1A1A2E" stroke="${stroke}" stroke-opacity="${op}" stroke-width="2" ${extra}/>`;
+
+function figureHead(eyebrow, title) {
+  const el = [];
+  el.push(...wordmarkAt(FM, 104, 28));
+  el.push(...tracked(F.mono, 'ASKODIN.APP', FR - trackedW(F.mono, 'ASKODIN.APP', 14, 3.6), 100, 14, 3.6, WHITE, 0.4));
+  el.push(...tracked(F.monoMed, eyebrow, FM, 196, 16, 4, ORANGE_TEXT, 1));
+  const tSize = fit(F.light, [title], 54, FIN);
+  el.push(at(F.light, title, FM, 266, tSize, WHITE, 0.96));
+  return { el, y: 266 };
+}
+function figureFoot(y, note = ILLUSTRATIVE) {
+  const el = [hair(FM, FR, y)];
+  const text = note ? `${note} · ${FURL}` : FURL;
+  const size = fitTracked(F.mono, text, 14, 0.18, FIN);
+  el.push(...tracked(F.mono, text, FM, y + 52, size, size * 0.18, WHITE, 0.4));
+  return { el, h: y + 96 };
+}
+const figureSvg = (title, h, body) =>
+  svgFor(`${title} — askOdin`, FW, h, [`<rect width="${FW}" height="${h}" fill="${DARK}"/>`, `<rect width="${FW}" height="6" fill="${ORANGE}"/>`, ...body]);
+
+// Figure — the fault lines: what the CIM says against what the exhibits show.
+function faultLinesFigure() {
+  const { el, y: y0 } = figureHead('// THE ANATOMY OF THE COLLISION', 'Where the narrative meets the numbers');
+  let y = y0 + 70;
+  const colW = (FIN - 40) / 2;
+  const cols = [
+    { x: FM, label: 'SELL-SIDE CIM · NARRATIVE', color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2,
+      items: ['“US$25.0M Adjusted EBITDA (28% margin)”', '“Fully normalized, historical cash flow”'] },
+    { x: FM + colW + 40, label: 'SUPPORTING EXHIBITS · NUMBERS', color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.6,
+      items: ['Recurring operating expense labeled one-off', 'Working capital stretched ahead of the auction'] },
+  ];
+  const size = 30;
+  const heights = cols.map((c) => c.items.reduce((h, t) => h + wrap(F.light, t, size, colW - 64).length * size * 1.4 + 28, 0));
+  const bh = 70 + Math.max(...heights) + 20;
+  cols.forEach((c) => {
+    el.push(box(c.x, y, colW, bh, c.stroke, c.sop));
+    el.push(...tracked(F.mono, c.label, c.x + 32, y + 52, 15, 3, c.color, c.op));
+    let ty = y + 112;
+    c.items.forEach((t) => { ty = para(el, F.light, t, c.x + 32, ty, size, colW - 64, WHITE, 0.92, 1.4) + size * 1.4 + 28; });
+  });
+  const foot = figureFoot(y + bh + 64, null);
+  return { h: foot.h, svg: [...el, ...foot.el] };
+}
+
+// Figure — horizontal bars, value at right, hot row in orange.
+function barsFigure(eyebrow, title, note, rows, max, fmt) {
+  const { el, y: y0 } = figureHead(eyebrow, title);
+  let y = y0 + 64;
+  y = para(el, F.serifIt, note, FM, y, 26, FIN, WHITE, 0.66) + 96;
+  const barH = 20;
+  rows.forEach((r) => {
+    el.push(at(F.med, r.label, FM, y, 30, WHITE, r.hot ? 0.96 : 0.82));
+    const v = fmt(r.value);
+    el.push(at(F.monoMed, v, FR - width(F.monoMed, v, 30), y, 30, r.hot ? ORANGE_TEXT : WHITE, r.hot ? 1 : 0.72));
+    el.push(`<rect x="${FM}" y="${y + 20}" width="${FIN}" height="${barH}" fill="${WHITE}" opacity="0.05"/>`);
+    el.push(`<rect x="${FM}" y="${y + 20}" width="${(FIN * r.value / max).toFixed(1)}" height="${barH}" fill="${r.hot ? ORANGE : WHITE}" opacity="${r.hot ? 1 : 0.3}"/>`);
+    y += 104;
+  });
+  const foot = figureFoot(y - 104 + 20 + barH + 64);
+  return { h: foot.h, svg: [...el, ...foot.el] };
+}
+const persistenceFigure = () => barsFigure('// THE PERSISTENCE TEST', 'One cost, four labels',
+  'The expense the CIM calls non-recurring, by fiscal year, in US$ millions. Only FY25 is presented as one-time.',
+  PERSISTENCE.map((r) => (r.hot ? { ...r, label: `${r.label} (add-back #3)` } : r)), 1.6, (v) => `$${v.toFixed(1)}M`);
+const dpoFigure = () => barsFigure('// THE PEG SQUEEZE', 'Payables stretched ahead of the auction',
+  'Days payable outstanding. The 26-day stretch shows up as record cash conversion in the deck.',
+  DPO, 75, (v) => `${v} days`);
+
+// Figure — one standard, pluggable modules.
+function modulesFigure() {
+  const { el, y: y0 } = figureHead('// EXTENSIBLE JUDGMENT', 'One standard, pluggable modules');
+  let y = y0 + 64;
+  y = para(el, F.serifIt, 'The standard does not change between asset types. Each module brings the extraction rules and tests for its own documents.', FM, y, 26, FIN, WHITE, 0.66) + 56;
+
+  const sh = 176;
+  el.push(box(FM, y, FIN, sh, ORANGE, 0.7));
+  el.push(...tracked(F.mono, 'THE STANDARD', FM + 32, y + 52, 15, 3.4, ORANGE_TEXT, 1));
+  const parts = ['5 pillars · 3 audit checks', 'JUDGE: Critical · Major · Minor', 'Defensible Audit Log'];
+  const pw = (FIN - 64 - 2 * 20) / 3;
+  const pSize = fit(F.med, parts, 26, pw - 40);
+  parts.forEach((p, i) => {
+    const px = FM + 32 + i * (pw + 20);
+    el.push(box(px, y + 80, pw, 64, WHITE, 0.15));
+    el.push(mid(F.med, p, px + pw / 2, y + 122, pSize, WHITE, 0.92));
+  });
+  y += sh;
+  // Drawn, not typeset: Plex Mono has no U+25B2.
+  [-90, 0, 90].forEach((dx) => {
+    const cx = FW / 2 + dx;
+    el.push(`<path d="M${cx - 11},${y + 52} L${cx},${y + 34} L${cx + 11},${y + 52} Z" fill="${WHITE}" opacity="0.4"/>`);
+  });
+  y += 84;
+
+  const mods = [
+    { name: ['Pitch decks and', 'investment memos'], tests: ['Claims against the model', 'Structural archetype match', 'Funding and runway physics'], stroke: WHITE, sop: 0.2, color: WHITE },
+    { name: ['CIM evaluation'], tests: ['Persistence test (add-backs)', 'Working capital trend test', 'Contract-compatibility test'], stroke: ORANGE, sop: 0.8, color: ORANGE_TEXT },
+    { name: ['Next document type'], tests: ['Same standard, same record,', 'new extraction rules.'], stroke: WHITE, sop: 0.25, color: WHITE, op: 0.5, dashed: true },
+  ];
+  const mw = (FIN - 2 * 24) / 3;
+  const mh = 340;
+  const tSize = fit(F.light, mods.flatMap((m) => m.tests.map((t) => `· ${t}`)), 24, mw - 56);
+  mods.forEach((m, i) => {
+    const mx = FM + i * (mw + 24);
+    el.push(box(mx, y, mw, mh, m.stroke, m.sop, m.dashed ? 'stroke-dasharray="10 8" fill-opacity="0"' : ''));
+    el.push(...tracked(F.mono, 'MODULE', mx + 28, y + 48, 13, 3, WHITE, 0.45));
+    m.name.forEach((n, j) => el.push(at(F.med, n, mx + 28, y + 96 + j * 36, 28, m.color, m.op ?? 1)));
+    const ty = y + 96 + m.name.length * 36 + 40;
+    m.tests.forEach((t, j) => el.push(at(F.light, m.dashed ? t : `· ${t}`, mx + 28, ty + j * tSize * 1.6, tSize, WHITE, m.dashed ? 0.5 : 0.8)));
+  });
+  const foot = figureFoot(y + mh + 64, null);
+  return { h: foot.h, svg: [...el, ...foot.el] };
+}
+
+// Figure — the side-by-side output, stacked: copilot, then compiler.
+function outputFigure() {
+  const { el, y: y0 } = figureHead('// PERSUASION VS. PHYSICS', 'The same disclosures, read two ways');
+  let y = y0 + 64;
+  const size = 28;
+  const inW = FIN - 72;
+
+  // Copilot block
+  const copilot = '“The target company demonstrates strong 28% Adjusted EBITDA margins with US$6.6M in defensible adjustments, primarily related to non-recurring ERP upgrades and facility rationalization.”';
+  const cLines = wrap(F.serifIt, copilot, size, inW).length;
+  const ch = 84 + cLines * size * 1.45 + 70;
+  el.push(box(FM, y, FIN, ch, WHITE, 0.2));
+  el.push(...tracked(F.mono, 'WHAT CONVERSATIONAL AI REPORTS', FM + 36, y + 52, 15, 3, WHITE, 0.55));
+  para(el, F.serifIt, copilot, FM + 36, y + 108, size, inW, WHITE, 0.9, 1.45);
+  el.push(...tracked(F.monoMed, '[VERDICT: NARRATIVE SMOOTHING]', FM + 36, y + ch - 32, 16, 2.4, WHITE, 0.55));
+  y += ch + 36;
+
+  // Compiler block
+  const findings = [
+    { tag: '[CRITICAL · KILL SHOT · PILLAR 4: BUSINESS MODEL PHYSICS]', body: 'Synergy (US$2.5M facility consolidation) conflicts with same-day SLAs covering 40% of regional enterprise revenue. Synergy disallowed.' },
+    { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: 'Add-back #3 (US$1.5M ERP upgrade) recurs across 4 consecutive fiscal years (FY22: $1.2M, FY23: $1.4M, FY24: $1.5M, FY25: $1.5M). Reclassified as recurring OpEx.' },
+    { tag: '[MAJOR · PILLAR 5: DEAL STRUCTURE]', body: 'Accounts payable stretched 26 days against the 36-month baseline. Estimated post-close cash shortfall against the proposed peg: US$4.1M.' },
+  ];
+  const bodySize = 26;
+  const fh = findings.reduce((h, f) => h + 36 + wrap(F.light, f.body, bodySize, inW).length * bodySize * 1.45 + 34, 0);
+  const kh = 84 + fh + 60 + 84;
+  el.push(box(FM, y, FIN, kh, ORANGE, 0.7));
+  el.push(...tracked(F.mono, 'WHAT A DETERMINISTIC COMPILER SURFACES', FM + 36, y + 52, 15, 3, ORANGE_TEXT, 1));
+  let ty = y + 112;
+  findings.forEach((f) => {
+    const tagSize = fitTracked(F.monoMed, f.tag, 17, 0.08, inW);
+    el.push(...tracked(F.monoMed, f.tag, FM + 36, ty, tagSize, tagSize * 0.08, ORANGE_TEXT, 1));
+    ty = para(el, F.light, f.body, FM + 36, ty + 44, bodySize, inW, WHITE, 0.92, 1.45) + bodySize * 1.45 + 30;
+  });
+  el.push(at(F.med, `Recast Adjusted EBITDA: US$${BRIDGE.recast.toFixed(1)}M (−${PCT}.0%)`, FM + 36, ty + 6, 28, GREEN_TEXT));
+  el.push(...tracked(F.monoMed, '[VERDICT: DO NOT PROCEED]', FM + 36, ty + 66, 17, 2.4, ORANGE_TEXT, 1));
+  y += kh;
+
+  const foot = figureFoot(y + 64);
+  return { h: foot.h, svg: [...el, ...foot.el] };
+}
+
+// Figure — same documents, two architectures.
+function pipelinesFigure() {
+  const { el, y: y0 } = figureHead('// WHY COPILOTS MISS IT', 'Same documents, two architectures');
+  let y = y0 + 80;
+  const rows = [
+    { label: 'CONVERSATIONAL COPILOT', color: WHITE, op: 0.55, stroke: WHITE, sop: 0.2, out: 'NARRATIVE SMOOTHING',
+      steps: [['Read', 'CIM and footnotes as one text corpus'], ['Summarize', 'Weighs how plausible the explanation sounds'], ['Memo', 'Fluent prose, no trace to the schedules']] },
+    { label: 'DETERMINISTIC COMPILER', color: ORANGE_TEXT, op: 1, stroke: ORANGE, sop: 0.7, out: 'FINDING RAISED',
+      steps: [['Extract', 'Each add-back becomes a discrete claim'], ['Evaluate', 'Deterministic tests against the multi-year exhibits'], ['Record', 'Findings tiered and traceable to their source']] },
+  ];
+  const gap = 56;
+  const sw = (FIN - 2 * gap) / 3;
+  const bSize = 23;
+  const bh = 64 + Math.max(...rows.flatMap((r) => r.steps.map(([, b]) => wrap(F.light, b, bSize, sw - 48).length))) * bSize * 1.42 + 30;
+  rows.forEach((r) => {
+    el.push(...tracked(F.mono, r.label, FM, y, 15, 3.4, r.color, r.op));
+    y += 30;
+    r.steps.forEach(([t, b], i) => {
+      const x = FM + i * (sw + gap);
+      el.push(box(x, y, sw, bh, r.stroke, r.sop));
+      el.push(at(F.med, t, x + 24, y + 48, 28, WHITE, 0.96));
+      para(el, F.light, b, x + 24, y + 48 + 44, bSize, sw - 48, WHITE, 0.78, 1.42);
+      if (i < 2) el.push(mid(F.mono, '→', x + sw + gap / 2, y + bh / 2 + 10, 28, WHITE, 0.45));
+    });
+    y += bh + 20;
+    el.push(`<rect x="${FM}" y="${y}" width="${FIN}" height="54" rx="6" fill="${r.stroke === ORANGE ? ORANGE : WHITE}" fill-opacity="${r.stroke === ORANGE ? 0.15 : 0.06}"/>`);
+    el.push(...tracked(F.monoMed, `↳ ${r.out}`, FM + 24, y + 35, 16, 3, r.color, r.op));
+    y += 54 + 72;
+  });
+  const foot = figureFoot(y - 8, null);
+  return { h: foot.h, svg: [...el, ...foot.el] };
+}
+
+const FIGURES = [
+  { id: 'fig1-fault-lines', title: 'Where the Narrative Meets the Numbers', make: faultLinesFigure },
+  { id: 'fig2-persistence', title: 'One Cost, Four Labels', make: persistenceFigure },
+  { id: 'fig3-dpo', title: 'Payables Stretched Ahead of the Auction', make: dpoFigure },
+  { id: 'fig4-modules', title: 'One Standard, Pluggable Modules', make: modulesFigure },
+  { id: 'fig5-output', title: 'The Same Disclosures, Read Two Ways', make: outputFigure },
+  { id: 'fig6-pipelines', title: 'Same Documents, Two Architectures', make: pipelinesFigure },
+];
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 function solveSpread(layout, cx, s, inner, want) {
@@ -717,6 +951,15 @@ async function main() {
     svgFor('One Cost, Four Labels — askOdin', 1200, 1200, frame(1200, 1200, cardPersistence, { s: 1.0, margin: 110, target: 0.78 })));
 
   await carouselPdf([cover, ...portrait], 1080, 1350, path.join(CARD_DIR, `askOdin-${SLUG}-linkedin-carousel.pdf`), T);
+
+  console.log('\nfigures/  (in-article, for Substack and note.com: no tables, no columns)');
+  const FIG_DIR = path.join(ASSET_DIR, 'figures');
+  fs.mkdirSync(FIG_DIR, { recursive: true });
+  for (const f of FIGURES) {
+    const { h, svg } = f.make();
+    const H = Math.round(h);
+    await emit(FIG_DIR, `askOdin-${SLUG}-${f.id}`, FW, H, figureSvg(f.title, H, svg));
+  }
 
   console.log('\nnote.com (ja)');
   await emit(NOTE_BANNER_DIR, `askOdin-${SLUG}-note-ja`, 1280, 670,
