@@ -317,6 +317,23 @@ function generateLogomark() {
 
   fs.writeFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-on-dark.svg'), svgLogomarkOnDark);
 
+  // Tile: the same mark re-framed with 13.5% clear margin around the O's
+  // tallest extent (spec: 12–15%). The standard viewBox leaves ~5% above and
+  // below the O, so a host UI applying border-radius (partner tiles, kiosk
+  // launchers) clips the ring. Rasterised to 1024/2048/4096 by generate-pngs.
+  const TILE_MARGIN = 0.135;
+  const oH = oCenteredBounds.y2 - oCenteredBounds.y1;
+  const tileDim = oH / (1 - 2 * TILE_MARGIN);
+  const tileX = dCx - tileDim / 2;
+  const tileY = dCy - tileDim / 2;
+  const svgLogomarkTile = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${tileX.toFixed(2)} ${tileY.toFixed(2)} ${tileDim.toFixed(2)} ${tileDim.toFixed(2)}" width="1024" height="1024">
+  <title>askOdin Icon</title>
+  <path d="${oCenteredPathData}" fill="${GREEN}"/>
+  <path d="${innerDiamond}" fill="${ORANGE}"/>
+</svg>`;
+
+  fs.writeFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-tile.svg'), svgLogomarkTile);
+
   console.log(`Logomark: ${maxDim.toFixed(0)}x${maxDim.toFixed(0)}`);
 
   return { sqX, sqY, maxDim, oCenteredPathData, innerDiamond, dCx, dCy };

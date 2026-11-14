@@ -53,6 +53,26 @@ async function svgToPngExact(svgPath, pngPath, width, height, opts = {}) {
   console.log(`  ${path.basename(pngPath)} (${width}x${height})`);
 }
 
+// Solid interior pixels must be the brand hexes exactly (anti-aliased edges
+// aside) and the corners fully transparent. Samples are fractions of the tile,
+// so they hold at any size: centre = diamond, 31% from left = ring stroke.
+async function assertTileColours(file) {
+  const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
+  const px = (fx, fy) => {
+    const i = (Math.round(fy * (info.height - 1)) * info.width + Math.round(fx * (info.width - 1))) * info.channels;
+    const hex = '#' + [0, 1, 2].map((k) => data[i + k].toString(16).padStart(2, '0')).join('').toUpperCase();
+    return data[i + 3] === 255 ? hex : `${hex}@alpha${data[i + 3]}`;
+  };
+  const checks = [
+    [px(0.5, 0.5), '#DB4A2B', 'diamond'],
+    [px(0.31, 0.5), '#147B58', 'ring'],
+  ];
+  for (const [got, want, what] of checks) {
+    if (got !== want) throw new Error(`${path.basename(file)}: ${what} should be ${want}, sampled ${got}`);
+  }
+  if (data[3] !== 0) throw new Error(`${path.basename(file)}: corner is not transparent`);
+}
+
 async function main() {
   console.log('=== Generating PNG exports ===\n');
 
@@ -170,6 +190,20 @@ async function main() {
       path.join(PNG_DIR, 'logomark', `askOdin-icon-on-dark-${size}.png`),
       size, size
     );
+  }
+
+  // Padded tile, transparent — partner UIs that round the corners, and 4K
+  // kiosk displays (4096 covers a 3840x2160 panel's short side with headroom).
+  // Rendered at native density rather than downscaled from 300dpi, so edges
+  // stay crisp; every size is pixel-checked against the brand hexes.
+  for (const size of [1024, 2048, 4096]) {
+    const out = path.join(PNG_DIR, 'logomark', `askOdin-icon-tile-${size}.png`);
+    await sharp(fs.readFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-tile.svg')), { density: 72 * size / 1024 })
+      .resize(size, size)
+      .png()
+      .toFile(out);
+    await assertTileColours(out);
+    console.log(`  ${path.basename(out)} (${size}x${size})`);
   }
 
   // ============================================================
@@ -299,4 +333,4 @@ async function main() {
   console.log(`\nTotal PNG files: ${pngFiles.length}`);
 }
 
-main().catch(console.error);
+main().catch((e) => { console.error(e); process.exit(1); });
