@@ -56,13 +56,19 @@ async function svgToPngExact(svgPath, pngPath, width, height, opts = {}) {
 // Solid interior pixels must be the brand hexes exactly (anti-aliased edges
 // aside) and the corners fully transparent. Samples are fractions of the tile,
 // so they hold at any size: centre = diamond, 31% from left = ring stroke.
-async function assertTileColours(file) {
+// With `background`, the file must instead be 3-channel RGB and the corner
+// must be exactly that background colour.
+async function assertTileColours(file, background) {
   const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
   const px = (fx, fy) => {
     const i = (Math.round(fy * (info.height - 1)) * info.width + Math.round(fx * (info.width - 1))) * info.channels;
     const hex = '#' + [0, 1, 2].map((k) => data[i + k].toString(16).padStart(2, '0')).join('').toUpperCase();
-    return data[i + 3] === 255 ? hex : `${hex}@alpha${data[i + 3]}`;
+    return info.channels === 3 || data[i + 3] === 255 ? hex : `${hex}@alpha${data[i + 3]}`;
   };
+  if (background) {
+    if (info.channels !== 3) throw new Error(`${path.basename(file)}: expected 24-bit RGB, got ${info.channels} channels`);
+    if (px(0, 0) !== background) throw new Error(`${path.basename(file)}: corner should be ${background}, sampled ${px(0, 0)}`);
+  }
   const checks = [
     [px(0.5, 0.5), '#DB4A2B', 'diamond'],
     [px(0.31, 0.5), '#147B58', 'ring'],
@@ -70,7 +76,7 @@ async function assertTileColours(file) {
   for (const [got, want, what] of checks) {
     if (got !== want) throw new Error(`${path.basename(file)}: ${what} should be ${want}, sampled ${got}`);
   }
-  if (data[3] !== 0) throw new Error(`${path.basename(file)}: corner is not transparent`);
+  if (!background && data[3] !== 0) throw new Error(`${path.basename(file)}: corner is not transparent`);
 }
 
 async function main() {
@@ -204,6 +210,18 @@ async function main() {
       .toFile(out);
     await assertTileColours(out);
     console.log(`  ${path.basename(out)} (${size}x${size})`);
+
+    // Same tile flattened onto Deep Dark #111119 as a true 24-bit RGB PNG (no
+    // alpha channel) — for forms that reject RGBA, and kiosk players that
+    // composite transparency onto black or white unpredictably.
+    const outDark = path.join(PNG_DIR, 'logomark', `askOdin-icon-tile-deep-dark-${size}.png`);
+    await sharp(out)
+      .flatten({ background: '#111119' })
+      .removeAlpha()
+      .png()
+      .toFile(outDark);
+    await assertTileColours(outDark, '#111119');
+    console.log(`  ${path.basename(outDark)} (${size}x${size}, 24-bit RGB)`);
   }
 
   // ============================================================
