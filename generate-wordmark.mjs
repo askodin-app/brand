@@ -334,6 +334,11 @@ function generateLogomark() {
 
   fs.writeFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-tile.svg'), svgLogomarkTile);
 
+  // White (single-colour) tile, same frame — for dark grounds where the brand
+  // green would sit too quietly, e.g. a Deep Dark kiosk screen seen from afar.
+  const svgLogomarkWhiteTile = svgLogomarkTile.replace(`fill="${GREEN}"`, 'fill="#FFFFFF"').replace(`fill="${ORANGE}"`, 'fill="#FFFFFF"');
+  fs.writeFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-white-tile.svg'), svgLogomarkWhiteTile);
+
   console.log(`Logomark: ${maxDim.toFixed(0)}x${maxDim.toFixed(0)}`);
 
   return { sqX, sqY, maxDim, oCenteredPathData, innerDiamond, dCx, dCy };

@@ -58,7 +58,8 @@ async function svgToPngExact(svgPath, pngPath, width, height, opts = {}) {
 // so they hold at any size: centre = diamond, 31% from left = ring stroke.
 // With `background`, the file must instead be 3-channel RGB and the corner
 // must be exactly that background colour.
-async function assertTileColours(file, background) {
+const BRAND_MARK = { diamond: '#DB4A2B', ring: '#147B58' };
+async function assertTileColours(file, background, mark = BRAND_MARK) {
   const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
   const px = (fx, fy) => {
     const i = (Math.round(fy * (info.height - 1)) * info.width + Math.round(fx * (info.width - 1))) * info.channels;
@@ -70,8 +71,8 @@ async function assertTileColours(file, background) {
     if (px(0, 0) !== background) throw new Error(`${path.basename(file)}: corner should be ${background}, sampled ${px(0, 0)}`);
   }
   const checks = [
-    [px(0.5, 0.5), '#DB4A2B', 'diamond'],
-    [px(0.31, 0.5), '#147B58', 'ring'],
+    [px(0.5, 0.5), mark.diamond, 'diamond'],
+    [px(0.31, 0.5), mark.ring, 'ring'],
   ];
   for (const [got, want, what] of checks) {
     if (got !== want) throw new Error(`${path.basename(file)}: ${what} should be ${want}, sampled ${got}`);
@@ -224,6 +225,17 @@ async function main() {
       await assertTileColours(outBg, bg);
       console.log(`  ${path.basename(outBg)} (${size}x${size}, 24-bit RGB)`);
     }
+
+    // White single-colour mark on Deep Dark, 24-bit RGB.
+    const outWhite = path.join(PNG_DIR, 'logomark', `askOdin-icon-white-tile-deep-dark-${size}.png`);
+    await sharp(fs.readFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-white-tile.svg')), { density: 72 * size / 1024 })
+      .resize(size, size)
+      .flatten({ background: '#111119' })
+      .removeAlpha()
+      .png()
+      .toFile(outWhite);
+    await assertTileColours(outWhite, '#111119', { diamond: '#FFFFFF', ring: '#FFFFFF' });
+    console.log(`  ${path.basename(outWhite)} (${size}x${size}, 24-bit RGB)`);
   }
 
   // ============================================================
