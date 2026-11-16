@@ -226,16 +226,19 @@ async function main() {
       console.log(`  ${path.basename(outBg)} (${size}x${size}, 24-bit RGB)`);
     }
 
-    // White single-colour mark on Deep Dark, 24-bit RGB.
-    const outWhite = path.join(PNG_DIR, 'logomark', `askOdin-icon-white-tile-deep-dark-${size}.png`);
-    await sharp(fs.readFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-white-tile.svg')), { density: 72 * size / 1024 })
-      .resize(size, size)
-      .flatten({ background: '#111119' })
-      .removeAlpha()
-      .png()
-      .toFile(outWhite);
-    await assertTileColours(outWhite, '#111119', { diamond: '#FFFFFF', ring: '#FFFFFF' });
-    console.log(`  ${path.basename(outWhite)} (${size}x${size}, 24-bit RGB)`);
+    // Single-colour marks on a contrasting ground, 24-bit RGB: white on Deep
+    // Dark, black on white.
+    for (const [mark, ink, suffix, bg] of [['white', '#FFFFFF', 'deep-dark', '#111119'], ['black', '#000000', 'white', '#FFFFFF']]) {
+      const outMono = path.join(PNG_DIR, 'logomark', `askOdin-icon-${mark}-tile-${suffix}-${size}.png`);
+      await sharp(fs.readFileSync(path.join(OUTPUT_DIR, 'logomark', `askOdin-icon-${mark}-tile.svg`)), { density: 72 * size / 1024 })
+        .resize(size, size)
+        .flatten({ background: bg })
+        .removeAlpha()
+        .png()
+        .toFile(outMono);
+      await assertTileColours(outMono, bg, { diamond: ink, ring: ink });
+      console.log(`  ${path.basename(outMono)} (${size}x${size}, 24-bit RGB)`);
+    }
   }
 
   // ============================================================
