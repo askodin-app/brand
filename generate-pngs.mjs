@@ -211,17 +211,19 @@ async function main() {
     await assertTileColours(out);
     console.log(`  ${path.basename(out)} (${size}x${size})`);
 
-    // Same tile flattened onto Deep Dark #111119 as a true 24-bit RGB PNG (no
-    // alpha channel) — for forms that reject RGBA, and kiosk players that
-    // composite transparency onto black or white unpredictably.
-    const outDark = path.join(PNG_DIR, 'logomark', `askOdin-icon-tile-deep-dark-${size}.png`);
-    await sharp(out)
-      .flatten({ background: '#111119' })
-      .removeAlpha()
-      .png()
-      .toFile(outDark);
-    await assertTileColours(outDark, '#111119');
-    console.log(`  ${path.basename(outDark)} (${size}x${size}, 24-bit RGB)`);
+    // Same tile flattened onto Deep Dark #111119 and white as true 24-bit RGB
+    // PNGs (no alpha channel) — for forms that reject RGBA, and kiosk players
+    // that composite transparency onto black or white unpredictably.
+    for (const [suffix, bg] of [['deep-dark', '#111119'], ['white', '#FFFFFF']]) {
+      const outBg = path.join(PNG_DIR, 'logomark', `askOdin-icon-tile-${suffix}-${size}.png`);
+      await sharp(out)
+        .flatten({ background: bg })
+        .removeAlpha()
+        .png()
+        .toFile(outBg);
+      await assertTileColours(outBg, bg);
+      console.log(`  ${path.basename(outBg)} (${size}x${size}, 24-bit RGB)`);
+    }
   }
 
   // ============================================================
