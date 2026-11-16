@@ -226,6 +226,16 @@ async function main() {
       console.log(`  ${path.basename(outBg)} (${size}x${size}, 24-bit RGB)`);
     }
 
+    // White single-colour mark, transparent — for placing over photography or
+    // any dark ground the host controls.
+    const outWhiteClear = path.join(PNG_DIR, 'logomark', `askOdin-icon-white-tile-${size}.png`);
+    await sharp(fs.readFileSync(path.join(OUTPUT_DIR, 'logomark', 'askOdin-icon-white-tile.svg')), { density: 72 * size / 1024 })
+      .resize(size, size)
+      .png()
+      .toFile(outWhiteClear);
+    await assertTileColours(outWhiteClear, undefined, { diamond: '#FFFFFF', ring: '#FFFFFF' });
+    console.log(`  ${path.basename(outWhiteClear)} (${size}x${size})`);
+
     // Single-colour marks on a contrasting ground, 24-bit RGB: white on Deep
     // Dark, black on white.
     for (const [mark, ink, suffix, bg] of [['white', '#FFFFFF', 'deep-dark', '#111119'], ['black', '#000000', 'white', '#FFFFFF']]) {
