@@ -156,8 +156,9 @@ function slidePatents() {
   ];
   const out = [
     runRight([{ font: FONT_SEMI, text: 'Proprietary Verification Architecture', size: fit(FONT_SEMI, 'Proprietary Verification Architecture', 56), fill: WHITE }], 108),
-    // The compact form (brand guidelines 7.4); the numbers sit in the table.
-    runRight([{ font: FONT_MONO, text: 'U.S. Patents Pending', size: 24, fill: MUTED }], 150),
+    // The compact form (brand guidelines 7.4, amended 2026-11-19 to carry the
+    // count); the numbers sit in the table.
+    runRight([{ font: FONT_MONO, text: 'U.S. Patents Pending (4 applications)', size: 24, fill: MUTED }], 150),
   ];
   // Three columns: number flush right, description and name right-aligned to fixed stops.
   const numStop = CONTENT_RIGHT;

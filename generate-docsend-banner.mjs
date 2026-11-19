@@ -48,9 +48,9 @@ const PATENTS = 'U.S. PATENTS PENDING · 63/948,559 · 63/994,876 · 64/011,252 
 // near 12px and drops it entirely on mobile. The tight variant states the fact and
 // leaves the numbers to the deck cover and footer, where they can be read and checked.
 //
-// This is the compact standard from Brand Guidelines 7.4, which carries neither the
-// numbers nor a count — set here in the banner's caps treatment.
-const PATENTS_SHORT = 'U.S. PATENTS PENDING';
+// This is the compact standard from Brand Guidelines 7.4: the count but not the
+// numbers (amended 2026-11-19) — set here in the banner's caps treatment.
+const PATENTS_SHORT = 'U.S. PATENTS PENDING (4 APPLICATIONS)';
 
 // Shared chrome: orange hairline, fading grid, one oversized faint O on the right.
 function backdrop() {
@@ -87,27 +87,32 @@ function patentLine(y, text = PATENTS) {
   return `<path d="${getPath(FONT_MONO, text, x, y, 19)}" fill="${WHITE}" opacity="0.6"/>`;
 }
 
-// Variant A — investor Space: the category analogy.
+// Variant A — investor Space: the category line.
 // Parameterised on the patent copy only: A and A-tight are the same composition,
 // so a change to the ladder cannot drift between them.
+//
+// Copy is the site's approved category line, verbatim
+// (askodin-coming-soon/CLAUDE.md, "Retrieval retrieves…"). It replaced the
+// Visa / Moody's triplet, retired 2026-09-04: third-party marks may appear in
+// editorial analogy but never in a slogan-shaped position, and a banner is one.
 function investorLadder(patents) {
   const el = backdrop();
   const size = 46;
   const leading = 58;
-  let y = 150;
+  let y = 128;
 
   const plain = (text) => {
     const x = RIGHT - getWidth(FONT_LIGHT, text, size);
     return `<path d="${getPath(FONT_LIGHT, text, x, y, size)}" fill="${WHITE}" opacity="0.92"/>`;
   };
 
-  el.push(plain('Visa verifies transactions.'));
-  y += leading;
-  el.push(plain('Moody’s verifies credit.'));
-  y += leading;
+  for (const line of ['Retrieval retrieves.', 'Analytics aggregates.', 'Workflow automates.']) {
+    el.push(plain(line));
+    y += leading;
+  }
 
-  // Punchline: "askOdin verifies " in white, "judgment." as the single orange accent
-  const head = 'askOdin verifies ';
+  // Punchline: "We compile " in white, "judgment." as the single orange accent
+  const head = 'We compile ';
   const tail = 'judgment.';
   const headW = getWidth(FONT_SEMI, head, size);
   const headX = RIGHT - headW - getWidth(FONT_SEMI, tail, size);
