@@ -64,6 +64,14 @@ const CARDS = [
   ['ja/terminal-audits/wework', '// TERMINAL AUDIT', ['WeWork S-1 の', 'ターミナル監査'], 'S-1の15年リースと月単位の収益。'],
   ['ja/use-cases/ai-due-diligence-software', '// USE CASE', ['VC・CVC向け', 'AIデューデリジェンス'], 'ピッチ資料の主張を、財務モデルと突き合わせる。'],
   ['ja/verify', '// ASKODIN VERIFY', ['検証済みブリーフ'], '「Verified by askOdin」バッジが何を証明するか。'],
+  // Press releases (askodin-coming-soon src/data/pressReleasesJa.ts). The date in
+  // the eyebrow is the release date and never changes.
+  ['ja/press', '// PRESS', ['プレスリリース'], 'Crucibleのパブリックベータから、PE・M&Aデスクの開設まで。'],
+  ['ja/press/askodin-clarity-pe-ma-desk', '// PRESS RELEASE · 2026.11.19', ['PE・M&Aデスクを開設'], 'LOIの前に、CIMのアドバックを売り手のデータブックと照らす。'],
+  ['ja/press/halvard-ipo-audit', '// PRESS RELEASE · 2026.10.26', ['Halvard監査：', '0点となった合成IPO'], 'プレゼンテーションでは43点。資料自身の数値と照らすと0点。'],
+  ['ja/press/pitch-deck-benchmark-2026', '// PRESS RELEASE · 2026.08.12', ['ピッチ資料2,488件の', 'ベンチマーク'], '中央値は100点中35点。崩れるのはビジネスモデルの物理。'],
+  ['ja/press/last-mile-of-ai-working-paper', '// PRESS RELEASE · 2026.04.28', ['ワーキングペーパー', '「The Last Mile of AI」'], '特許出願中のRUNE、RAVEN、JUDGE、NORNを公表。'],
+  ['ja/press/askodin-crucible-public-beta', '// PRESS RELEASE · 2025.12.19', ['Crucibleの', 'パブリックベータ'], 'ピッチ資料を、無料でストレステスト。'],
 ];
 
 // Text is outlined, so a kanji outside the Noto subset has no fallback: it would
