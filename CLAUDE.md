@@ -1,78 +1,139 @@
-# askOdin Brand Quick Reference v1.0
+# askOdin Brand Quick Reference v2.0
 
-## Brand Name
-**askOdin** — always camelCase. Never "AskOdin", "Askodin", "ASKODIN", "Ask Odin", or "ask odin".
+v2.0 from Astra, 2026-11-19, checked against the site canon (`askodin-coming-soon/CLAUDE.md`,
+`BRAND-COLOR-USAGE.md`, `scripts/check-*.mjs`). Where the two differ, the site canon wins: its
+build checks enforce it. Generators written before v2.0 still hardcode the v1 tokens (`#8899AA`,
+`#C62828`, `#F9A825`). Use v2.0 tokens for new work, and don't change dated assets that are
+already published.
 
-## Colors (Hex)
+## Brand Name & Lines
+- **Wordmark:** **askOdin**, always camelCase: "ask" in `#DB4A2B`, "Odin" in `#147B58`. Never "AskOdin", "Askodin", "ASKODIN", "Ask Odin", or "ask odin".
+- **Category:** AI Judgment Infrastructure™
+- **Market slogan:** **AI Judgment Infrastructure™ for private capital.**
+- **Core aphorisms:** "Hope is not an asset class." / "Audit the arithmetic before you commit capital."
 
-| Color | Hex | Role |
-|-------|-----|------|
-| askOdin Orange | `#DB4A2B` | Accent — CTAs, warnings, emphasis (15%) |
-| askOdin Green | `#147B58` | Institutional weight, trust (25%) |
-| Deep Dark | `#111119` | Page backgrounds, decks (60%) |
-| Dark Surface | `#1A1A2E` | Cards, panels on dark bg |
-| Dark Card | `#1E293B` | Elevated cards, tables |
-| Border | `#E2E8F0` | Borders and dividers |
-| Muted Text | `#8899AA` | Secondary text |
-| Kill Shot | `#C62828` | Fatal severity |
-| Watch | `#F9A825` | Medium severity |
+Do not reuse the retired Visa/Moody's triplet ("Visa verifies transactions. Moody's verifies credit. askOdin verifies judgment.") or any variant as a tagline. Third-party marks are fine inside editorial analogies, never in a slogan position.
 
-## Typography
+**Founder name.** Public site surfaces and bylines: **YekSoon Lok**. "(YS)" goes only in introductions (bio heading, byline card, first mention), never in structured data. The surname-first lockup **LOK Yek Soon (YS) / 陸 奕 順** is for print in markets that expect it (meishi, see `PRINT-MEISHI.md`), formal corporate filings and legal execution documents.
 
-| Family | Usage |
-|--------|-------|
-| **IBM Plex Sans** | Headlines, body text, UI, logo |
-| **IBM Plex Mono** | Code, data labels, scores, metadata, patent numbers |
-| **IBM Plex Serif** | Clarity Briefs, investment memos, quotes, editorial |
+## Colors: Hardened Dark
 
-### Key Weights
-- Light (300): Display headlines 40px+ only
-- Regular (400): Body text
-- Medium (500): Subheadings, navigation, labels
-- SemiBold (600): Section headers, emphasis, logo, CTAs
-- Bold (700): Sparingly — key stats, Kill Shot labels
+Color is functional financial data, never decoration.
 
-## Quick Copy-Paste
+| Token | Value | Use |
+|---|---|---|
+| Deep Dark (base canvas) | `#111119` | Primary page background (60%) |
+| Dark Surface | `#1A1A2E` | Elevated panels, table containers |
+| Dark Card | `#1E293B` | Floating cards, modal bodies |
+| askOdin Green (Wood) | `#147B58` | Institutional trust, PRIORITY band, Clarity / allocator CTA (25%) |
+| askOdin Orange (Fire) | `#DB4A2B` | Fatal contradictions, kill shot, Crucible CTA, alerts (15%) |
+| Surveillance Blue | `#60A5FA` (blue-400) | WATCH band (50–69), PE desk surveillance |
+| Audit Amber | `#F59E0B` (amber-500) | HIGH severity finding, unverified broker add-back |
+| Hairline Subtle | `rgba(255,255,255,0.04)` | Grid lines, internal row borders |
+| Hairline Border | `rgba(255,255,255,0.08)` | Card perimeters, container boundaries |
+| Hairline Focus | `rgba(255,255,255,0.16)` | Active inputs, selected states |
+| Muted Text | `#94A3B8` | Metadata, micro-labels, `//` section kickers |
+
+Score bands (canonical since 2026-09-30): PASS <50 · WATCH 50–69 · INVESTIGATE 70–84 · PRIORITY 85+.
+Red is reserved for forensic alarm states (kill shots, FATAL markers, terminal error lines). Use it on
+borders only, never as a primary brand color or a content accent.
 
 ```css
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Primary */
-  --askodin-orange: #DB4A2B;
-  --askodin-green: #147B58;
-
   /* Foundation */
-  --deep-dark: #111119;
-  --dark-surface: #1A1A2E;
-  --dark-card: #1E293B;
+  --canvas-base: #111119;
+  --surface-elevated: #1A1A2E;
+  --surface-card: #1E293B;
 
-  /* UI */
-  --white: #FFFFFF;
-  --background-light: #F7F8FA;
-  --border: #E2E8F0;
-  --muted-text: #8899AA;
+  /* Brand accents */
+  --askodin-green: #147B58;   /* Wood: institutional trust, Clarity */
+  --askodin-orange: #DB4A2B;  /* Fire: fatal alert, Crucible */
 
-  /* Semantic */
-  --kill-shot: #C62828;
-  --watch: #F9A825;
+  /* Semantic financial indicators */
+  --status-fatal: #DB4A2B;    /* Fatal contradiction (score 0) */
+  --status-watch: #60A5FA;    /* WATCH band (50–69) */
+  --status-high: #F59E0B;     /* HIGH severity finding */
+  --status-priority: #147B58; /* PRIORITY band (85+) */
+
+  /* Hairlines & text */
+  --hairline-subtle: rgba(255, 255, 255, 0.04);
+  --hairline-border: rgba(255, 255, 255, 0.08);
+  --hairline-focus: rgba(255, 255, 255, 0.16);
+  --text-muted: #94A3B8;
 
   /* Typography */
-  --font-sans: 'IBM Plex Sans', Arial, Helvetica, sans-serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: 'IBM Plex Serif', Georgia, serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
 }
 ```
 
-## Positioning One-Liner
-Visa verifies transactions. Moody's verifies credit. **askOdin verifies judgment.**
+## Typography: Tri-Plex
 
-## Messaging Snippets
-- "Judgment infrastructure for capital allocation"
-- "RUNE compiles narrative into judgment"
-- "40+ forensic dimensions, 5 failure modes"
-- "Score: 0. Do Not Proceed."
-- "The Last Mile of AI Isn't Information. It's Judgment."
+| Family | Usage |
+|---|---|
+| **IBM Plex Sans** | UI, navigation, form labels, body copy, technical headings, logo |
+| **IBM Plex Serif** | Boardroom headlines, primary aphorisms, pull quotes, IC memo narrative |
+| **IBM Plex Mono** | Financial figures ($44.0M, −31.4%), cell coordinates (`Sheet!Cell`), SHA-256 fingerprints, rule IDs (PE-001), section kickers, patent numbers |
+
+Weights: Light 300 for display 40px+ only · Regular 400 body · Medium 500 labels/nav · SemiBold 600 section headers, logo, CTAs · Bold 700 sparingly.
+
+**Section kickers.** The `//` is the compiler's voice and stays on marketing and platform surfaces. Set it in
+mono, 11px, uppercase, tracking-wider, muted slate `#94A3B8` (`text-text-muted`). Do not use
+`text-neutral-500` or `text-white/40`: at 11px on `#111119` they measure under 4 : 1, which fails WCAG AA.
+Never color a kicker orange or green.
+
+## Product Names: Masterbrand
+
+Products follow the IBM pattern. The formal name is used where a page introduces the product, in schema and in the
+press kit. Running copy uses the bare word. Product words are not claimed marks and carry **no ™**.
+
+- **askOdin Clarity**: the institutional diligence platform, with two desks (below).
+- **askOdin Crucible**: pre-IC forensic stress test for venture-backed founders.
+- **askOdin Verify**: the public verification ledger and badge destination.
+- **askOdin Clarity Brief**: the deliverable (Pre-LOI Brief for PE, IC Brief for VC). No ™.
+- **Sandbox** (`/sandbox/`): the interactive demo running synthetic and benchmark rooms. It is a page, not a product line.
+
+Claimed marks that do carry ™: AI Judgment Infrastructure™, Clarity Score™, Clarity Framework™, Judgment Graph™,
+RUNE / RAVEN / NORN / JUDGE Protocol™, Defensible Audit Log™.
+
+## Clarity Desks
+
+**PE & M&A desk (shipped; `pkg/rune/pe_rules.go`).** Pre-LOI triage. It reads a CIM, the seller's Excel
+databook and, optionally, the seller's QoE, then tests each add-back in minutes:
+
+- **PE-001** (HIGH): a "one-time" add-back that recurs in 2+ fiscal years at ≥50% of the claim.
+- **PE-002** (MEDIUM): owner pay added back above an analyst-entered replacement salary. Skipped without that input.
+- **PE-003** (MEDIUM): pro forma / run-rate savings inside trailing EBITDA.
+- **PE-004** (HIGH / FATAL): CIM reported EBITDA vs databook LTM. HIGH above 5%, FATAL above 10%.
+- **PE-005** (HIGH / FATAL): CIM adjusted EBITDA vs the seller's QoE, same bands. Runs only when a QoE is uploaded.
+
+Outputs: supported EBITDA, disqualified add-backs ($ and %), supported EV at the seller's implied multiple,
+PE score, questions for management, and a leverage scenario built from inputs the analyst types. State it as
+a scenario ("at 4.0x on the broker figure, debt is 5.8x supported EBITDA against a 4.5x ceiling"), never as a
+detected covenant breach or "Day-1 default". Out of scope: QoE replacement, ledger/trial-balance
+reconciliation, data-room connectors.
+
+**Venture & CVC desk (shipped).** Cross-audits the deck against the operating model and cap table: five
+scored pillars plus three audit checks (stated revenue vs model formula, gross-margin divergence, runway and
+unstated CapEx, dilution).
+
+## Truth-in-Advertising Lexicon
+
+The site enforces these with build checks; copy here must pass them too.
+
+- **No Training Use**: the policy phrase. Client documents never train, tune or calibrate a model. Never "Zero-Training Enterprise Guarantee".
+- **Stateless processing**: ephemeral containers, documented 30-day purge. Never "isolated memory enclaves".
+- **No connector claims**: deal teams download from VDRs (Datasite, Intralinks) and upload. Never claim VDR integration or scraping.
+- **RAVEN mechanics are sealed**: say "smooths over variances" / "narrative smoothing", never "auto-reconciliation bias".
+- **No superlatives**: no "the only verification engine" or other unprovable absolutes.
+- **Patents**: full line on IP pages/memos: `U.S. Patents Pending: 63/948,559 · 63/994,876 · 64/011,252 · 64/017,488`. Compact line on footers/UI/meishi: "U.S. Patents Pending (4 applications)" / 「米国特許出願中（4件）」. Always "pending".
+- **NORN is roadmap**: describe it as designed-to, with "on the roadmap" on the same line. Never present tense. What ships today: IOI and LOI runs on the same company side by side.
+- **The 7 archetypes** are YekSoon Lok's research taxonomy for venture deals, not an engine classifier. Never present an archetype count as a product stat.
+- **Proof separation**: `/terminal-audits/` covers real public filings only (WeWork, Theranos, FTX, Sonder, Bird). `/research/` covers synthetic benchmarks (Apex Industrial, Halvard Computing), always labelled synthetic.
+- **PDFs**: none ship to `public/` without SHA-256 registration and technical / compliance / narrative sign-off in `src/data/pdf-signoffs.json`.
 
 ## Voice Cheat Sheet
 Direct, Technical, Institutional, Precise — never hedging, jargon-heavy, corporate-bland, or vague.
